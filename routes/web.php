@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DataBarangController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,3 +25,5 @@ Route::get('/data-barang', function () {
 Route::get('/dashboard', function () {
     return view('welcome');
 })->name('dashboard');
+
+Route::resource('data-barang', DataBarangController::class);
