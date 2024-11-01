@@ -25,7 +25,7 @@ class DataBarangController extends Controller
         }
 
         $categories = Category::all();
-        return view('data-barang.index', compact('categories'));
+        return view('data-barang.data', compact('categories'));
     }
 
     public function store(Request $request)

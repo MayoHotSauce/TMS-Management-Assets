@@ -1,6 +1,5 @@
-<!-- resources/views/data-barang/index.blade.php -->
 @extends('adminlte::page')
-extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Data Barang')
 
@@ -97,7 +96,6 @@ extends('layouts.app')
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Similar fields as add modal -->
                     <div class="form-group">
                         <label>Deskripsi</label>
                         <input type="text" class="form-control" name="description" id="edit-description" required>

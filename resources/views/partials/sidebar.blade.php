@@ -84,7 +84,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('data-barang') }}" class="nav-link">
+                    <a href="{{ route('data-barang.index') }}" class="nav-link">
                         <i class="nav-icon fas fa-box"></i>
                         <p>Data Barang</p>
                     </a>
