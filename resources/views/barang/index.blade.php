@@ -21,6 +21,7 @@
             <thead>
                 <tr>
                     <th>Asset ID</th>
+                    <th>Name</th>
                     <th>Description</th>
                     <th>Room</th>
                     <th>Category</th>
@@ -33,6 +34,7 @@
                 @foreach($barang as $item)
                 <tr>
                     <td>{{ $item->asset_tag }}</td>
+                    <td>{{ $item->name }}</td>
                     <td>{{ $item->description }}</td>
                     <td>{{ $item->room ? $item->room->name : 'No Room' }}</td>
                     <td>{{ $item->category ? $item->category->name : 'No Category' }}</td>

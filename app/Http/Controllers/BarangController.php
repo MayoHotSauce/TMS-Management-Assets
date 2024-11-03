@@ -23,8 +23,8 @@ class BarangController extends Controller
 
     public function index()
     {
-        $barang = Barang::with('category')->paginate(10);
-        return view('barang.index', compact('barang'));
+        $daftarBarang = DB::table('daftar_barang')->select('id', 'name', 'description', 'room', 'category', 'year')->get();
+        return view('barang.index', compact('daftarBarang'));
     }
 
     public function create()

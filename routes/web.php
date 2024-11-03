@@ -34,7 +34,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('rooms', RoomController::class);
     Route::resource('barang', DataBarangController::class);
-    Route::resource('maintenance', MaintenanceController::class);
+    Route::group(['middleware' => ['auth']], function () {
+        Route::resource('maintenance', MaintenanceController::class);
+    });
 });
 
 // Test Route

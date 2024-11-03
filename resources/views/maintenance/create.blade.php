@@ -14,24 +14,19 @@
             
             <div class="form-group">
                 <label for="barang_id">Asset</label>
-                <select name="barang_id" id="barang_id" class="form-control @error('barang_id') is-invalid @enderror" required>
-                    <option value="">Select Asset</option>
+                <select name="barang_id" id="barang_id" class="form-control">
+                    <option value="">No Asset</option>
                     @foreach($assets as $asset)
                         <option value="{{ $asset->id }}">
-                            {{ $asset->id }} - {{ $asset->description }}
+                            {{ $asset->name }}
                         </option>
                     @endforeach
                 </select>
-                @error('barang_id')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
             </div>
             
             <div class="form-group">
                 <label for="maintenance_date">Maintenance Date</label>
-                <input type="date" name="maintenance_date" id="maintenance_date" 
-                    class="form-control @error('maintenance_date') is-invalid @enderror" 
-                    required>
+                <input type="date" name="maintenance_date" id="maintenance_date" class="form-control @error('maintenance_date') is-invalid @enderror">
                 @error('maintenance_date')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror

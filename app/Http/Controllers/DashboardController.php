@@ -2,31 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asset;
+use App\Models\Maintenance;
 use Illuminate\Http\Request;
-use App\Models\DaftarBarang;
-use App\Models\AssetTransfer;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalAssets = 0;
-        $assetsNeedingMaintenance = 0;
-        $assetsInMaintenance = 0;
-        $assetsByRoom = collect();
-        $assetsByCategory = collect();
-        $maintenanceDue = collect();
-        $pendingTransfers = collect();
+        // Fetch total assets
+        $totalAssets = Asset::count();
 
-        return view('dashboard', compact(
-            'totalAssets',
-            'assetsNeedingMaintenance',
-            'assetsInMaintenance',
-            'assetsByRoom',
-            'assetsByCategory',
-            'maintenanceDue',
-            'pendingTransfers'
-        ));
+        // Fetch total maintenance logs
+        $totalMaintenance = Maintenance::count();
+
+        // Fetch maintenance logs with scheduled status
+        $needMaintenance = Maintenance::where('status', 'scheduled')->count();
+
+        // Fetch maintenance logs with pending status
+        $inMaintenance = Maintenance::where('status', 'pending')->count();
+
+        // Fetch maintenance logs that are due soon
+        $maintenances = Maintenance::where('due_date', '<=', now()->addDays(7))->get();
+
+        return view('dashboard.index', compact('totalAssets', 'totalMaintenance', 'needMaintenance', 'inMaintenance', 'maintenances'));
     }
 }
