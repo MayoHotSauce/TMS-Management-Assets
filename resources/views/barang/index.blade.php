@@ -32,11 +32,11 @@
             <tbody>
                 @foreach($barang as $item)
                 <tr>
-                    <td>{{ $item->id }}</td>
+                    <td>{{ $item->asset_tag }}</td>
                     <td>{{ $item->description }}</td>
-                    <td>{{ $item->room }}</td>
-                    <td>{{ $item->category->name }}</td>
-                    <td>{{ $item->tahun_pengadaan }}</td>
+                    <td>{{ $item->room ? $item->room->name : 'No Room' }}</td>
+                    <td>{{ $item->category ? $item->category->name : 'No Category' }}</td>
+                    <td>{{ $item->purchase_date }}</td>
                     <td>{{ $item->created_at }}</td>
                     <td>
                         <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-info">

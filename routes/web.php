@@ -1,7 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\DataBarangController;
+use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\Auth\LoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,22 +20,32 @@ use App\Http\Controllers\DataBarangController;
 */
 
 Route::get('/', function () {
-    return view('/welcome');
+    return view('welcome');
 });
 
-Route::get('/data-barang', [DataBarangController::class, 'index'])->name('data-barang.index');
-Route::resource('categories', DataBarangController::class);
+// Authentication Routes
+Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('login', [LoginController::class, 'login']);
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/dashboard', function () {
-    return view('welcome');
-})->name('dashboard');
-
-Route::resource('data-barang', DataBarangController::class);
-
+// Protected Routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
-    Route::resource('assets', 'AssetController');
-    Route::resource('categories', 'CategoryController');
-    Route::resource('locations', 'LocationController');
-    Route::get('/reports', 'ReportController@index')->name('reports');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('categories', CategoryController::class);
+    Route::resource('rooms', RoomController::class);
+    Route::resource('barang', DataBarangController::class);
+    Route::resource('maintenance', MaintenanceController::class);
+});
+
+// Test Route
+Route::get('/test-barang', function() {
+    return DaftarBarang::create([
+        'name' => 'Test Item',
+        'description' => 'Test Description',
+        'room' => 'Ruang Utama',
+        'category_id' => 1,
+        'tahun_pengadaan' => 2024,
+        'condition' => 'good',
+        'status' => 'active'
+    ]);
 });

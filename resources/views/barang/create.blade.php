@@ -2,54 +2,55 @@
 
 @section('title', 'Add New Asset')
 
-@section('content_header')
-    <h1>Add New Asset</h1>
-@stop
-
 @section('content')
 <div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Add New Asset</h3>
+    </div>
     <div class="card-body">
         <form action="{{ route('barang.store') }}" method="POST">
             @csrf
             <div class="form-group">
-                <label for="description">Description</label>
-                <input type="text" class="form-control @error('description') is-invalid @enderror" 
-                       id="description" name="description" value="{{ old('description') }}" required>
-                @error('description')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
+                <label>Name</label>
+                <input type="text" name="name" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="room">Room</label>
-                <input type="text" class="form-control @error('room') is-invalid @enderror" 
-                       id="room" name="room" value="{{ old('room') }}" required>
-                @error('room')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
+                <label>Description</label>
+                <input type="text" name="description" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="category_id">Category</label>
-                <select class="form-control @error('category_id') is-invalid @enderror" 
-                        id="category_id" name="category_id" required>
+                <label>Purchase Cost</label>
+                <input type="number" name="purchase_cost" class="form-control" min="0" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label>Room</label>
+                <select name="room_id" class="form-control" required>
+                    <option value="">Select Room</option>
+                    @foreach($rooms as $room)
+                        <option value="{{ $room->id }}">{{ $room->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category_id" class="form-control" required>
                     <option value="">Select Category</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
                 </select>
-                @error('category_id')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
             </div>
 
             <div class="form-group">
-                <label for="tahun_pengadaan">Year of Procurement</label>
-                <input type="number" class="form-control @error('tahun_pengadaan') is-invalid @enderror" 
-                       id="tahun_pengadaan" name="tahun_pengadaan" value="{{ old('tahun_pengadaan', date('Y')) }}" required>
-                @error('tahun_pengadaan')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
+                <label>Purchase Date</label>
+                <input type="date" name="purchase_date" 
+                       class="form-control" 
+                       value="{{ date('Y-m-d') }}" 
+                       required>
             </div>
 
             <button type="submit" class="btn btn-primary">Save Asset</button>

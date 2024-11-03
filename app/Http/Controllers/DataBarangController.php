@@ -1,69 +1,106 @@
 <?php
-// app/Http/Controllers/DataBarangController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\DaftarBarang;
 use App\Models\Category;
+use App\Models\BarangSequence;
+use App\Models\Room;
 use Illuminate\Http\Request;
-use DataTables;
+use Illuminate\Support\Facades\DB;
 
 class DataBarangController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        if ($request->ajax()) {
-            $data = DaftarBarang::with('category')->select('v_daftar_barang.*');
-            return DataTables::of($data)
-                ->addColumn('action', function($row){
-                    $btn = '<button type="button" data-id="'.$row->id.'" class="edit-btn btn btn-primary btn-sm">Edit</button> ';
-                    $btn .= '<button type="button" data-id="'.$row->id.'" class="delete-btn btn btn-danger btn-sm">Delete</button>';
-                    return $btn;
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-
+        $barang = DaftarBarang::with(['category', 'room'])->paginate(10);
         $categories = Category::all();
-        return view('data-barang.data', compact('categories'));
+        return view('barang.index', compact('barang', 'categories'));
+    }
+
+    public function create()
+    {
+        $categories = Category::all();
+        $rooms = Room::all();
+        return view('barang.create', compact('categories', 'rooms'));
+    }
+
+    private function generateId($roomId)
+    {
+        $sequence = BarangSequence::first();
+        $nextId = $sequence->next_val;
+        
+        // Update sequence
+        $sequence->next_val = $nextId + 1;
+        $sequence->save();
+        
+        // Get room code from room_id
+        $room = Room::find($roomId);
+        $roomCode = strtoupper(substr($room->name, 0, 2));
+        
+        return "TMS-" . $roomCode . "-" . str_pad($nextId, 5, '0', STR_PAD_LEFT);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'description' => 'required',
-            'room' => 'required|in:Ruang Utama,Ruang Meeting',
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'description' => 'required|string',
+            'room_id' => 'required|exists:rooms,id',
             'category_id' => 'required|exists:categories,id',
-            'tahun_pengadaan' => 'required|integer|min:1900|max:' . date('Y'),
+            'purchase_date' => 'required|date',
+            'purchase_cost' => 'required|numeric|min:0'
         ]);
 
-        DaftarBarang::create($request->all());
-        return response()->json(['success' => true]);
+        // Format the purchase_date before saving
+        $validated['purchase_date'] = date('Y-m-d', strtotime($request->purchase_date));
+        
+        // Add default values
+        $validated['status'] = 'available';
+        $validated['asset_tag'] = $this->generateId($request->room_id);
+        
+        // Create the asset
+        $barang = DaftarBarang::create($validated);
+
+        return redirect()->route('barang.index')
+                        ->with('success', 'Asset added successfully');
     }
 
     public function edit($id)
     {
-        $barang = DaftarBarang::find($id);
-        return response()->json($barang);
+        $barang = DaftarBarang::findOrFail($id);
+        $categories = Category::all();
+        $rooms = Room::all();
+        return view('barang.edit', compact('barang', 'categories', 'rooms'));
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'description' => 'required',
-            'room' => 'required|in:Ruang Utama,Ruang Meeting',
+        $barang = DaftarBarang::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'description' => 'required|string',
+            'room_id' => 'required|exists:rooms,id',
             'category_id' => 'required|exists:categories,id',
-            'tahun_pengadaan' => 'required|integer|min:1900|max:' . date('Y'),
+            'purchase_date' => 'required|date',
+            'purchase_cost' => 'required|numeric|min:0'
         ]);
 
-        $barang = DaftarBarang::find($id);
-        $barang->update($request->all());
-        return response()->json(['success' => true]);
+        // Format the purchase_date before saving
+        $validated['purchase_date'] = date('Y-m-d', strtotime($request->purchase_date));
+        
+        $barang->update($validated);
+        
+        return redirect()->route('barang.index')
+                        ->with('success', 'Asset updated successfully');
     }
 
     public function destroy($id)
     {
-        DaftarBarang::find($id)->delete();
-        return response()->json(['success' => true]);
+        $barang = DaftarBarang::findOrFail($id);
+        $barang->delete();
+        return redirect()->route('barang.index')
+                        ->with('success', 'Barang berhasil dihapus');
     }
 }
