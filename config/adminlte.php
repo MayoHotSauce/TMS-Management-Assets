@@ -257,7 +257,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => 'dashboard',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -321,12 +321,12 @@ return [
             'icon' => 'fas fa-tachometer-alt'
         ],
         [
-            'text' => 'Categories',
+            'text' => 'Kategori',
             'url'  => 'categories',
             'icon' => 'fas fa-list'
         ],
         [
-            'text' => 'Rooms',
+            'text' => 'Ruangan',
             'url'  => 'rooms',
             'icon' => 'fas fa-door-open'
         ],
@@ -336,7 +336,7 @@ return [
             'icon' => 'fas fa-boxes'
         ],
         [
-            'text' => 'Maintenance',
+            'text' => 'Perbaikan',
             'url'  => 'maintenance',
             'icon' => 'fas fa-tools'
         ],

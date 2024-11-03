@@ -55,7 +55,7 @@
 
 <div class="row">
     <div class="col-12">
-        <h4>Maintenance Due Soon</h4>
+        <h4>Daftar Barang</h4>
         <table class="table">
             <thead>
                 <tr>
@@ -74,6 +74,60 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recently Added Daftar Barang</h3>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Asset ID</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentDaftarBarang as $barang)
+                            <tr>
+                                <td>{{ $barang->id }}</td>
+                                <td>{{ $barang->description }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recently Added Maintenance</h3>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Asset ID</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentMaintenance as $maintenance)
+                            <tr>
+                                <td>{{ $maintenance->barang_id }}</td>
+                                <td>{{ $maintenance->description }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 @stop 
