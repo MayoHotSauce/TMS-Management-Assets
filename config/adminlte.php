@@ -340,6 +340,11 @@ return [
             'url'  => 'maintenance',
             'icon' => 'fas fa-tools'
         ],
+        [
+            'text' => 'Pengajuan',
+            'url'  => 'pengajuan',
+            'icon' => 'fas fa-file-invoice'
+        ],
     ],
     /*
     |--------------------------------------------------------------------------
