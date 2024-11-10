@@ -7,6 +7,8 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\DataBarangController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AssetRequestController;
+use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,4 +54,23 @@ Route::get('/test-barang', function() {
         'condition' => 'good',
         'status' => 'active'
     ]);
+});
+
+// PENGAJUAN ASSET
+Route::middleware(['auth'])->group(function () {
+    Route::get('/pengajuan', [AssetRequestController::class, 'index'])->name('pengajuan.index');
+    Route::get('/pengajuan/create', [AssetRequestController::class, 'create'])->name('pengajuan.create');
+    Route::post('/pengajuan', [AssetRequestController::class, 'store'])->name('pengajuan.store');
+    Route::get('/pengajuan/{id}', [AssetRequestController::class, 'show'])->name('pengajuan.show');
+    Route::get('/pengajuan/{id}/approve/{token}', [AssetRequestController::class, 'approve'])->name('pengajuan.approve');
+    Route::get('/pengajuan/{id}/decline/{token}', [AssetRequestController::class, 'decline'])->name('pengajuan.decline');
+});
+
+Route::get('/test-email', function() {
+    Mail::raw('Test email', function($message) {
+        $message->to('adityanathaniel44@gmail.com')
+                ->subject('Test Email');
+    });
+    
+    return 'Test email sent!';
 });
