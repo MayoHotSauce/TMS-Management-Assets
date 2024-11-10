@@ -74,3 +74,9 @@ Route::get('/test-email', function() {
     
     return 'Test email sent!';
 });
+
+// Public approval routes (no auth required)
+Route::get('/approval/{id}/approve/{token}', [AssetRequestController::class, 'handleApproval'])
+    ->name('approval.approve');
+Route::get('/approval/{id}/decline/{token}', [AssetRequestController::class, 'handleDecline'])
+    ->name('approval.decline');

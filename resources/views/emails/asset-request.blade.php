@@ -4,66 +4,64 @@
     <style>
         .button {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 24px;
             margin: 10px;
             text-decoration: none;
             border-radius: 5px;
             color: white;
+            font-weight: bold;
         }
         .approve { background-color: #4CAF50; }
         .decline { background-color: #f44336; }
         .details { background-color: #2196F3; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; border: 1px solid #ddd; }
+        th { background-color: #f8f9fa; text-align: left; }
     </style>
 </head>
 <body>
-    <h2>Asset Request Needs Your Approval</h2>
-    
-    <p>A new asset request requires your review:</p>
-    
-    <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
-        <tr>
-            <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Asset Name</th>
-            <td style="padding: 8px; border: 1px solid #ddd;">{{ $assetRequest->name }}</td>
-        </tr>
-        <tr>
-            <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Category</th>
-            <td style="padding: 8px; border: 1px solid #ddd;">{{ $assetRequest->category }}</td>
-        </tr>
-        <tr>
-            <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Price</th>
-            <td style="padding: 8px; border: 1px solid #ddd;">Rp {{ number_format($assetRequest->price, 0, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Description</th>
-            <td style="padding: 8px; border: 1px solid #ddd;">{{ $assetRequest->description ?? 'No description provided' }}</td>
-        </tr>
-        <tr>
-            <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Requested By</th>
-            <td style="padding: 8px; border: 1px solid #ddd;">{{ $assetRequest->requester_email }}</td>
-        </tr>
-    </table>
-
-    <div style="text-align: center; margin: 30px 0;">
-        <a href="{{ route('pengajuan.approve', ['id' => $assetRequest->id, 'token' => $assetRequest->approval_token]) }}" 
-           class="button approve" style="background-color: #4CAF50;">
-            Approve Request
-        </a>
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333; text-align: center;">Asset Request Needs Your Approval</h2>
         
-        <a href="{{ route('pengajuan.decline', ['id' => $assetRequest->id, 'token' => $assetRequest->approval_token]) }}" 
-           class="button decline" style="background-color: #f44336;">
-            Decline Request
-        </a>
+        <table>
+            <tr>
+                <th>Asset Name</th>
+                <td>{{ $assetRequest->name }}</td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td>{{ $assetRequest->category }}</td>
+            </tr>
+            <tr>
+                <th>Price</th>
+                <td>Rp {{ number_format($assetRequest->price, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ $assetRequest->description ?? 'No description provided' }}</td>
+            </tr>
+            <tr>
+                <th>Requested By</th>
+                <td>{{ $assetRequest->requester_email }}</td>
+            </tr>
+        </table>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ url("/approval/{$assetRequest->id}/approve/{$assetRequest->approval_token}") }}" 
+               class="button approve">
+                Approve Request
+            </a>
+            
+            <a href="{{ url("/approval/{$assetRequest->id}/decline/{$assetRequest->approval_token}") }}" 
+               class="button decline">
+                Decline Request
+            </a>
+        </div>
+
+        <p style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
+            This is an automated message. Please do not reply to this email.<br>
+            This approval link can only be used once.
+        </p>
     </div>
-
-    <p style="text-align: center;">
-        <a href="{{ route('pengajuan.show', $assetRequest->id) }}" 
-           class="button details" style="background-color: #2196F3;">
-            View Complete Details
-        </a>
-    </p>
-
-    <p style="color: #666; font-size: 12px; margin-top: 30px;">
-        This is an automated message from the TMS Asset Management System. Please do not reply to this email.
-    </p>
 </body>
 </html> 

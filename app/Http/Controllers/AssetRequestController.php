@@ -101,4 +101,56 @@ class AssetRequestController extends Controller
             ->route('pengajuan.show', $id)
             ->with('success', 'Asset request has been declined.');
     }
+
+    public function handleApproval($id, $token)
+    {
+        $assetRequest = AssetRequest::where('id', $id)
+            ->where('approval_token', $token)
+            ->first();
+
+        if (!$assetRequest) {
+            return view('approval.error');
+        }
+
+        // Check if already processed
+        if ($assetRequest->status !== 'pending') {
+            return view('approval.error')
+                ->with('message', 'This request has already been processed.');
+        }
+
+        $assetRequest->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approval_token' => null // Invalidate token after use
+        ]);
+
+        return view('approval.success')
+            ->with('status', 'approved');
+    }
+
+    public function handleDecline($id, $token)
+    {
+        $assetRequest = AssetRequest::where('id', $id)
+            ->where('approval_token', $token)
+            ->first();
+
+        if (!$assetRequest) {
+            return view('approval.error');
+        }
+
+        // Check if already processed
+        if ($assetRequest->status !== 'pending') {
+            return view('approval.error')
+                ->with('message', 'This request has already been processed.');
+        }
+
+        $assetRequest->update([
+            'status' => 'declined',
+            'approved_at' => now(),
+            'approval_token' => null // Invalidate token after use
+        ]);
+
+        return view('approval.success')
+            ->with('status', 'declined');
+    }
 }
