@@ -5,9 +5,9 @@
     <div class="card">
         <div class="card-body text-center">
             <i class="fas fa-exclamation-circle text-danger" style="font-size: 48px;"></i>
-            <h3 class="mt-3">Invalid or Expired Link</h3>
-            <p>This approval link has already been used or is no longer valid.</p>
-            <p class="text-muted">Each approval link can only be used once.</p>
+            <h3 class="mt-3">Link telah Expired / Invalid.</h3>
+            <p>Link ini telah invalid, silakan ajukan kembali.</p>
+            <p class="text-muted">Tiap link cuma bisa sekali pakai.</p>
         </div>
     </div>
 </div>

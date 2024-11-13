@@ -21,27 +21,27 @@
 </head>
 <body>
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #333; text-align: center;">Asset Request Needs Your Approval</h2>
+        <h2 style="color: #333; text-align: center;">Asset ini butuh persetujuan Anda!</h2>
         
         <table>
             <tr>
-                <th>Asset Name</th>
+                <th>Nama Asset</th>
                 <td>{{ $assetRequest->name }}</td>
             </tr>
             <tr>
-                <th>Category</th>
+                <th>Kategori</th>
                 <td>{{ $assetRequest->category }}</td>
             </tr>
             <tr>
-                <th>Price</th>
+                <th>Harga</th>
                 <td>Rp {{ number_format($assetRequest->price, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <th>Description</th>
+                <th>Deskripsi</th>
                 <td>{{ $assetRequest->description ?? 'No description provided' }}</td>
             </tr>
             <tr>
-                <th>Requested By</th>
+                <th>Diminta Oleh</th>
                 <td>{{ $assetRequest->requester_email }}</td>
             </tr>
         </table>
@@ -49,18 +49,18 @@
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ url("/approval/{$assetRequest->id}/approve/{$assetRequest->approval_token}") }}" 
                class="button approve">
-                Approve Request
+                Setuju
             </a>
             
             <a href="{{ url("/approval/{$assetRequest->id}/decline/{$assetRequest->approval_token}") }}" 
                class="button decline">
-                Decline Request
+                Tolak
             </a>
         </div>
 
         <p style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
-            This is an automated message. Please do not reply to this email.<br>
-            This approval link can only be used once.
+            Ini adalah pesan otomatis. Tolong jangan Reply ke email ini.<br>
+            Link approval cuma bisa Sekali Pakai.
         </p>
     </div>
 </body>

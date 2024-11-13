@@ -5,9 +5,9 @@
     <div class="card">
         <div class="card-body text-center">
             <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
-            <h3 class="mt-3">Action Completed Successfully</h3>
-            <p>The asset request has been {{ session('status') }}.</p>
-            <p class="text-muted">This approval link has been used and cannot be accessed again.</p>
+            <h3 class="mt-3">Pilihan anda telah di rekap, Terima Kasih!</h3>
+            <p>Asset ini sudah berhasil diajukan {{ session('status') }}.</p>
+            <p class="text-muted">Link approval ini sudah di Dipakai.</p>
         </div>
     </div>
 </div>
