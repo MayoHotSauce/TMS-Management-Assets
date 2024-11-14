@@ -6,11 +6,97 @@
     <h1>Asset Management</h1>
 @stop
 
+@section('css')
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm;
+            margin: 0 auto;
+        }
+        
+        .label-container {
+            width: 89mm;
+            height: 36mm;
+            margin-bottom: 5mm;
+            display: inline-block;
+            vertical-align: top;
+        }
+        
+        .label-content {
+            border: 1px solid #660066;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 5mm;
+        }
+        
+        .logo-section {
+            width: 25mm;
+            margin-right: 5mm;
+        }
+        
+        .logo-section img {
+            width: 20mm;
+            height: 20mm;
+            object-fit: contain;
+        }
+        
+        .info-section {
+            flex: 1;
+        }
+        
+        .company-name {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 3mm;
+        }
+        
+        .info-row {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            margin: 1mm 0;
+        }
+        
+        .info-label {
+            display: inline-block;
+            width: 40mm;
+        }
+
+        @media print {
+            body {
+                width: 210mm;
+                height: 297mm;
+            }
+            .page {
+                page-break-after: always;
+            }
+            .label-container:nth-child(2n) {
+                margin-left: 5mm;
+            }
+        }
+    </style>
+@stop
+
 @section('content')
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Asset List</h3>
         <div class="card-tools">
+            <button type="button" class="btn btn-info mr-2" data-toggle="modal" data-target="#logoModal">
+                <i class="fas fa-image"></i> Update Logo
+            </button>
             <a href="{{ route('barang.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add New Asset
             </a>
@@ -41,6 +127,10 @@
                     <td>{{ $item->purchase_date }}</td>
                     <td>{{ $item->created_at }}</td>
                     <td>
+                        <button type="button" class="btn btn-sm btn-success print-label" 
+                                onclick="showPrintDialog('{{ $item->name }}', '{{ $item->asset_tag }}', '{{ $item->room ? $item->room->name : 'No Room' }}', '{{ $item->purchase_date }}')">
+                            <i class="fas fa-print"></i>
+                        </button>
                         <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-info">
                             <i class="fas fa-edit"></i>
                         </a>
@@ -59,4 +149,365 @@
         {{ $barang->links() }}
     </div>
 </div>
+
+<!-- Logo Upload Modal -->
+<div class="modal fade" id="logoModal" tabindex="-1" role="dialog" aria-labelledby="logoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoModalLabel">Update Company Logo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('company.logo.update') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="logo">Select New Logo</label>
+                        <input type="file" class="form-control-file" id="logo" name="logo" accept="image/*" required>
+                    </div>
+                    <div id="logo-preview" class="mt-3 text-center">
+                        @if(file_exists(public_path('storage/company/logo.png')))
+                            <img src="{{ asset('storage/company/logo.png') }}" style="max-width: 200px;">
+                        @endif
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload Logo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Print Dialog Modal -->
+<div class="modal fade" id="printDialog" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Print Labels</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Primary Item Section -->
+                <div class="primary-item mb-4">
+                    <h6>Primary Item</h6>
+                    <div class="form-group">
+                        <label>Selected Item: <span id="selectedItemName"></span></label>
+                    </div>
+                    <div class="form-group">
+                        <label for="printQuantity">Number of copies:</label>
+                        <input type="number" class="form-control" id="printQuantity" min="1" value="1">
+                    </div>
+                </div>
+
+                <!-- Additional Items Section -->
+                <div class="additional-items">
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="addMoreItems">
+                        <label class="form-check-label" for="addMoreItems">Add more items to print</label>
+                    </div>
+                    
+                    <div id="additionalItemsContainer" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Select</th>
+                                        <th>Asset ID</th>
+                                        <th>Name</th>
+                                        <th>Room</th>
+                                        <th>Copies</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($barang as $item)
+                                    <tr class="additional-item-row" data-asset-id="{{ $item->asset_tag }}">
+                                        <td>
+                                            <input type="checkbox" class="additional-item-check" 
+                                                data-id="{{ $item->asset_tag }}"
+                                                data-name="{{ $item->name }}"
+                                                data-room="{{ $item->room ? $item->room->name : 'No Room' }}"
+                                                data-year="{{ $item->purchase_date }}">
+                                        </td>
+                                        <td>{{ $item->asset_tag }}</td>
+                                        <td>{{ $item->name }}</td>
+                                        <td>{{ $item->room ? $item->room->name : 'No Room' }}</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm additional-quantity" 
+                                                min="1" value="1" style="width: 70px;" disabled>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Print Options -->
+                <div class="print-options mt-4">
+                    <div class="form-group">
+                        <label for="printLayout">Print Style:</label>
+                        <select class="form-control" id="printLayout">
+                            <option value="single">Single Label Per Page</option>
+                            <option value="fill">Fill Page</option>
+                            <option value="merge">Merge All</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="executePrint()">Print</button>
+            </div>
+        </div>
+    </div>
+</div>
+@stop
+
+@section('js')
+<script>
+let currentPrintData = null;
+
+function showPrintDialog(name, code, room, year) {
+    currentPrintData = { name, code, room, year };
+    $('#selectedItemName').text(name + ' (' + code + ')');
+    
+    // Hide or disable the primary item in additional items list
+    $(`.additional-item-row[data-asset-id="${code}"]`).hide(); // Option 1: Hide the row
+    // OR
+    // $(`.additional-item-row[data-asset-id="${code}"] input`).prop('disabled', true); // Option 2: Disable checkbox
+    
+    $('#printDialog').modal('show');
+}
+
+// Reset the dialog when it's closed
+$('#printDialog').on('hidden.bs.modal', function () {
+    $('.additional-item-row').show(); // Show all rows again
+    // OR
+    // $('.additional-item-row input').prop('disabled', false); // Enable all checkboxes
+    $('#addMoreItems').prop('checked', false).trigger('change');
+});
+
+// Handle additional items checkbox
+$('#addMoreItems').change(function() {
+    $('#additionalItemsContainer').toggle(this.checked);
+    $('.additional-quantity').prop('disabled', !this.checked);
+});
+
+// Handle individual item checkboxes
+$('.additional-item-check').change(function() {
+    $(this).closest('tr').find('.additional-quantity').prop('disabled', !this.checked);
+});
+
+function executePrint() {
+    const primaryQuantity = parseInt($('#printQuantity').val()) || 1;
+    const layout = $('#printLayout').val();
+    
+    // Collect all items to print
+    let itemsToPrint = [{
+        ...currentPrintData,
+        quantity: primaryQuantity
+    }];
+
+    // Add additional selected items
+    if ($('#addMoreItems').is(':checked')) {
+        $('.additional-item-check:checked').each(function() {
+            const $row = $(this).closest('tr');
+            itemsToPrint.push({
+                name: $(this).data('name'),
+                code: $(this).data('id'),
+                room: $(this).data('room'),
+                year: $(this).data('year'),
+                quantity: parseInt($row.find('.additional-quantity').val()) || 1
+            });
+        });
+    }
+
+    printLabels(itemsToPrint, layout);
+    $('#printDialog').modal('hide');
+}
+
+function printLabels(items, layout) {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    const logoPath = "{{ asset('storage/company/logo.png') }}";
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 5mm;
+                }
+                body {
+                    margin: 0;
+                    padding: 0;
+                }
+                .page {
+                    width: 210mm;
+                    min-height: 297mm;
+                    padding: 5mm 0;
+                    margin: 0 auto;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-between;
+                    align-content: flex-start;
+                    row-gap: 5mm;
+                }
+                .label-container {
+                    width: 85mm;
+                    height: 32mm;
+                    border: 1px solid #660066;
+                    page-break-inside: avoid;
+                    margin: 0;
+                }
+                .label-content {
+                    height: 100%;
+                    display: flex;
+                }
+                .logo-section {
+                    width: 28mm;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-right: 1px solid #660066;
+                    padding: 2mm;
+                }
+                .logo-section img {
+                    width: 22mm;
+                    height: 22mm;
+                    object-fit: contain;
+                }
+                .info-section {
+                    flex: 1;
+                    padding: 1mm 2mm;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+                .company-name {
+                    font-family: Arial, sans-serif;
+                    font-size: 10px;
+                    font-weight: bold;
+                    text-align: center;
+                    border-bottom: 1px solid #660066;
+                    padding: 0.5mm 0;
+                    margin-bottom: 0.5mm;
+                }
+                .info-rows {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    height: 20mm;
+                }
+                .info-row {
+                    font-family: Arial, sans-serif;
+                    font-size: 9px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #660066;
+                    padding: 0.5mm 0;
+                    margin: 0;
+                    height: 4.5mm;
+                }
+                .info-row:last-child {
+                    border-bottom: none;
+                }
+                .info-label {
+                    font-weight: bold;
+                }
+                .info-value {
+                    text-align: right;
+                }
+                @media print {
+                    body {
+                        width: 210mm;
+                    }
+                    .page {
+                        page-break-after: always;
+                    }
+                    .label-container {
+                        break-inside: avoid;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+    `);
+
+    let labelsHtml = '';
+    let labelCount = 0;
+    const labelsPerPage = layout === 'single' ? 1 : 8;
+
+    items.forEach(item => {
+        for (let i = 0; i < item.quantity; i++) {
+            if (labelCount > 0 && labelCount % labelsPerPage === 0 && layout !== 'merge') {
+                printWindow.document.write(`<div class="page">${labelsHtml}</div>`);
+                labelsHtml = '';
+            }
+
+            labelsHtml += `
+                <div class="label-container">
+                    <div class="label-content">
+                        <div class="logo-section">
+                            <img src="${logoPath}" alt="Company Logo">
+                        </div>
+                        <div class="info-section">
+                            <div class="company-name">PT TECHNOLOGY MULTI SYSTEM</div>
+                            <div class="info-rows">
+                                <div class="info-row">
+                                    <span class="info-label">NAMA BARANG</span>
+                                    <span class="info-value">: ${item.name}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">KODE BARANG</span>
+                                    <span class="info-value">: ${item.code}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">RUANGAN</span>
+                                    <span class="info-value">: ${item.room}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">TAHUN PENGADAAN</span>
+                                    <span class="info-value">: ${item.year}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            labelCount++;
+        }
+    });
+
+    if (labelsHtml) {
+        printWindow.document.write(`<div class="page">${labelsHtml}</div>`);
+    }
+
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+
+    printWindow.onload = function() {
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    };
+}
+
+// Initialize event handlers when document is ready
+$(document).ready(function() {
+    $('#addMoreItems').change();
+    $('.additional-item-check').change();
+});
+</script>
 @stop

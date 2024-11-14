@@ -9,6 +9,7 @@ use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AssetRequestController;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\CompanyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,3 +81,13 @@ Route::get('/approval/{id}/approve/{token}', [AssetRequestController::class, 'ha
     ->name('approval.approve');
 Route::get('/approval/{id}/decline/{token}', [AssetRequestController::class, 'handleDecline'])
     ->name('approval.decline');
+
+
+// UPDATE COMPANY LOGO
+Route::middleware(['auth'])->group(function () {
+    Route::get('/company/logo/update', [CompanyController::class, 'showLogoForm'])
+        ->name('company.logo.edit');
+
+    Route::post('/company/logo/update', [CompanyController::class, 'updateLogo'])
+        ->name('company.logo.update');
+});
