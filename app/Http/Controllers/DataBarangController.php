@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DaftarBarang;
+use App\Models\Asset;
 use App\Models\Category;
 use App\Models\BarangSequence;
 use App\Models\Room;
@@ -13,7 +13,7 @@ class DataBarangController extends Controller
 {
     public function index()
     {
-        $barang = DaftarBarang::with(['category', 'room'])->paginate(10);
+        $barang = Asset::with(['category', 'room'])->paginate(10);
         $categories = Category::all();
         return view('barang.index', compact('barang', 'categories'));
     }
@@ -56,11 +56,11 @@ class DataBarangController extends Controller
         $validated['purchase_date'] = date('Y-m-d', strtotime($request->purchase_date));
         
         // Add default values
-        $validated['status'] = 'available';
+        $validated['status'] = 'siap_dipakai';
         $validated['asset_tag'] = $this->generateId($request->room_id);
         
-        // Create the asset
-        $barang = DaftarBarang::create($validated);
+        // Create the asset in assets table, not daftar_barang
+        $barang = Asset::create($validated);
 
         return redirect()->route('barang.index')
                         ->with('success', 'Asset added successfully');
@@ -68,7 +68,7 @@ class DataBarangController extends Controller
 
     public function edit($id)
     {
-        $barang = DaftarBarang::findOrFail($id);
+        $barang = Asset::findOrFail($id);
         $categories = Category::all();
         $rooms = Room::all();
         return view('barang.edit', compact('barang', 'categories', 'rooms'));
@@ -76,7 +76,7 @@ class DataBarangController extends Controller
 
     public function update(Request $request, $id)
     {
-        $barang = DaftarBarang::findOrFail($id);
+        $barang = Asset::findOrFail($id);
         
         $validated = $request->validate([
             'name' => 'required|string',
@@ -98,7 +98,7 @@ class DataBarangController extends Controller
 
     public function destroy($id)
     {
-        $barang = DaftarBarang::findOrFail($id);
+        $barang = Asset::findOrFail($id);
         $barang->delete();
         return redirect()->route('barang.index')
                         ->with('success', 'Barang berhasil dihapus');

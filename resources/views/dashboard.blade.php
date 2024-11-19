@@ -53,6 +53,22 @@
             margin-left: 0 !important;
         }
     }
+
+    .room-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .room-icons {
+        position: absolute;
+        right: 15px;
+        bottom: 15px;
+    }
+
+    .room-icons img {
+        width: 50px;
+        height: 50px;
+    }
 </style>
 @endpush
 

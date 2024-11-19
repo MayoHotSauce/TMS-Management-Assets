@@ -47,8 +47,16 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained();
             $table->foreignId('room_id')->constrained('rooms');
             $table->date('purchase_date');
-            $table->decimal('purchase_cost', 10, 2);
-            $table->enum('status', ['available', 'in_use', 'maintenance', 'retired']);
+            $table->decimal('purchase_cost', 15, 2);
+            $table->enum('status', [
+                'siap_dipakai',
+                'sedang_dipakai',
+                'dalam_perbaikan',
+                'rusak',
+                'siap_dipinjam',
+                'sedang_dipinjam',
+                'dimusnahkan'
+            ]);
             $table->string('manufacturer')->nullable();
             $table->string('model')->nullable();
             $table->string('serial_number')->nullable();
@@ -67,7 +75,7 @@ return new class extends Migration
             $table->enum('status', ['completed', 'pending', 'scheduled']);
             $table->timestamps();
             
-            $table->foreign('barang_id')->references('id')->on('daftar_barang')->onDelete('cascade');
+            $table->foreign('barang_id')->references('id')->on('assets')->onDelete('cascade');
         });
 
         // Asset Transfers table
@@ -82,7 +90,7 @@ return new class extends Migration
             $table->enum('status', ['pending', 'approved', 'rejected', 'completed']);
             $table->timestamps();
             
-            $table->foreign('barang_id')->references('id')->on('daftar_barang')->onDelete('cascade');
+            $table->foreign('barang_id')->references('id')->on('assets')->onDelete('cascade');
         });
     }
 

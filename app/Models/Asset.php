@@ -6,18 +6,39 @@ use Illuminate\Database\Eloquent\Model;
 
 class Asset extends Model
 {
-    protected $table = 'assets'; // Ensure this matches your table name
+    protected $table = 'assets';
+
     protected $fillable = [
-        'id', // Include other fields as necessary
+        'name',
         'description',
-        'room',
-        'category',
-        'year',
-        'created_at',
+        'room_id',
+        'category_id',
+        'purchase_date',
+        'purchase_cost',
+        'status',
+        'asset_tag',
+        'manufacturer',
+        'model',
+        'serial_number'
     ];
 
-    public function getFormattedIdAttribute()
+    public function maintenances()
     {
-        return "TMS-{$this->room}-{$this->id}"; // Adjust this based on your actual room and ID structure
+        return $this->hasMany(Maintenance::class, 'barang_id');
+    }
+
+    public static function getAvailableAssets()
+    {
+        return self::where('status', 'available')->get();
+    }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 } 

@@ -28,4 +28,9 @@ class Maintenance extends Model
     {
         return $this->belongsTo(Barang::class, 'barang_id');
     }
+
+    public function asset()
+    {
+        return $this->belongsTo(Asset::class, 'barang_id');
+    }
 }

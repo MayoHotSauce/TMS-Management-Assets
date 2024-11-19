@@ -41,6 +41,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('barang', DataBarangController::class);
     Route::group(['middleware' => ['auth']], function () {
         Route::resource('maintenance', MaintenanceController::class);
+        Route::put('maintenance/{maintenance}/complete', [MaintenanceController::class, 'complete'])->name('maintenance.complete');
+        Route::put('maintenance/{maintenance}/update-status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.updateStatus');
     });
 });
 
@@ -91,3 +93,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/company/logo/update', [CompanyController::class, 'updateLogo'])
         ->name('company.logo.update');
 });
+
+Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
+
+Route::get('/barang', [App\Http\Controllers\BarangController::class, 'index'])->name('barang.index');

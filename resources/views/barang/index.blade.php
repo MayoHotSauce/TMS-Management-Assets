@@ -2,272 +2,222 @@
 
 @section('title', 'Asset Management')
 
-@section('content_header')
-    <h1>Asset Management</h1>
-@stop
-
-@section('css')
-    <style>
-        @page {
-            size: A4;
-            margin: 10mm;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 10mm;
-            margin: 0 auto;
-        }
-        
-        .label-container {
-            width: 89mm;
-            height: 36mm;
-            margin-bottom: 5mm;
-            display: inline-block;
-            vertical-align: top;
-        }
-        
-        .label-content {
-            border: 1px solid #660066;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            padding: 5mm;
-        }
-        
-        .logo-section {
-            width: 25mm;
-            margin-right: 5mm;
-        }
-        
-        .logo-section img {
-            width: 20mm;
-            height: 20mm;
-            object-fit: contain;
-        }
-        
-        .info-section {
-            flex: 1;
-        }
-        
-        .company-name {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 3mm;
-        }
-        
-        .info-row {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            margin: 1mm 0;
-        }
-        
-        .info-label {
-            display: inline-block;
-            width: 40mm;
-        }
-
-        @media print {
-            body {
-                width: 210mm;
-                height: 297mm;
-            }
-            .page {
-                page-break-after: always;
-            }
-            .label-container:nth-child(2n) {
-                margin-left: 5mm;
-            }
-        }
-    </style>
-@stop
-
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Asset List</h3>
-        <div class="card-tools">
-            <button type="button" class="btn btn-info mr-2" data-toggle="modal" data-target="#logoModal">
-                <i class="fas fa-image"></i> Update Logo
-            </button>
-            <a href="{{ route('barang.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add New Asset
-            </a>
+    {{-- Hapus atau comment bagian debug ini
+    @if(config('app.debug'))
+        <div class="alert alert-info">
+            <p>Debug Info:</p>
+            <ul>
+                <li>Total Items: {{ $barang->total() }}</li>
+                <li>Current Page: {{ $barang->currentPage() }}</li>
+                <li>Items Per Page: {{ $barang->perPage() }}</li>
+                <li>Total Pages: {{ $barang->lastPage() }}</li>
+            </ul>
         </div>
-    </div>
-    <div class="card-body">
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Asset ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Room</th>
-                    <th>Category</th>
-                    <th>Year</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($barang as $item)
-                <tr>
-                    <td>{{ $item->asset_tag }}</td>
-                    <td>{{ $item->name }}</td>
-                    <td>{{ $item->description }}</td>
-                    <td>{{ $item->room ? $item->room->name : 'No Room' }}</td>
-                    <td>{{ $item->category ? $item->category->name : 'No Category' }}</td>
-                    <td>{{ $item->purchase_date }}</td>
-                    <td>{{ $item->created_at }}</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-success print-label" 
-                                onclick="showPrintDialog('{{ $item->name }}', '{{ $item->asset_tag }}', '{{ $item->room ? $item->room->name : 'No Room' }}', '{{ $item->purchase_date }}')">
-                            <i class="fas fa-print"></i>
-                        </button>
-                        <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form action="{{ route('barang.destroy', $item->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                <i class="fas fa-trash"></i>
+    @endif
+    --}}
+
+    <h1>Asset Management</h1>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Asset List</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-info mr-2" data-toggle="modal" data-target="#logoModal">
+                    <i class="fas fa-image"></i> Update Logo
+                </button>
+                <a href="{{ route('barang.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Asset
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Asset Tag</th>
+                        <th>Nama Barang</th>
+                        <th>Deskripsi</th>
+                        <th>Ruangan</th>
+                        <th>Kategori</th>
+                        <th>Status</th>
+                        <th>Tanggal Pembelian</th>
+                        <th>Biaya</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($barang as $item)
+                    <tr>
+                        <td>{{ $item->asset_tag }}</td>
+                        <td>{{ $item->name }}</td>
+                        <td>{{ $item->description }}</td>
+                        <td>{{ optional($item->room)->name }}</td>
+                        <td>{{ optional($item->category)->name }}</td>
+                        <td>
+                            @php
+                                $statusLabels = [
+                                    'siap_dipakai' => 'Siap Dipakai',
+                                    'sedang_dipakai' => 'Sedang Dipakai',
+                                    'dalam_perbaikan' => 'Dalam Perbaikan',
+                                    'rusak' => 'Rusak',
+                                    'siap_dipinjam' => 'Siap Dipinjam',
+                                    'sedang_dipinjam' => 'Sedang Dipinjam',
+                                    'dimusnahkan' => 'Dimusnahkan'
+                                ];
+                            @endphp
+                            <span class="badge badge-{{ $statusClass[$item->status] ?? 'secondary' }}">
+                                {{ $statusLabels[$item->status] ?? ucfirst(str_replace('_', ' ', $item->status)) }}
+                            </span>
+                        </td>
+                        <td>{{ $item->purchase_date }}</td>
+                        <td>Rp {{ number_format($item->purchase_cost, 2) }}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-success print-label" 
+                                    onclick="showPrintDialog('{{ $item->name }}', '{{ $item->asset_tag }}', '{{ optional($item->room)->name }}', '{{ $item->purchase_date }}')">
+                                <i class="fas fa-print"></i>
                             </button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        {{ $barang->links() }}
-    </div>
-</div>
-
-<!-- Logo Upload Modal -->
-<div class="modal fade" id="logoModal" tabindex="-1" role="dialog" aria-labelledby="logoModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="logoModalLabel">Update Company Logo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form action="{{ route('company.logo.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="logo">Select New Logo</label>
-                        <input type="file" class="form-control-file" id="logo" name="logo" accept="image/*" required>
-                    </div>
-                    <div id="logo-preview" class="mt-3 text-center">
-                        @if(file_exists(public_path('storage/company/logo.png')))
-                            <img src="{{ asset('storage/company/logo.png') }}" style="max-width: 200px;">
-                        @endif
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Upload Logo</button>
-                </div>
-            </form>
+                            <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('barang.destroy', $item->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9" class="text-center">Tidak ada data</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            {{ $barang->links() }}
         </div>
     </div>
-</div>
 
-<!-- Print Dialog Modal -->
-<div class="modal fade" id="printDialog" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Print Labels</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- Primary Item Section -->
-                <div class="primary-item mb-4">
-                    <h6>Primary Item</h6>
-                    <div class="form-group">
-                        <label>Selected Item: <span id="selectedItemName"></span></label>
-                    </div>
-                    <div class="form-group">
-                        <label for="printQuantity">Number of copies:</label>
-                        <input type="number" class="form-control" id="printQuantity" min="1" value="1">
-                    </div>
+    <!-- Logo Upload Modal -->
+    <div class="modal fade" id="logoModal" tabindex="-1" role="dialog" aria-labelledby="logoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoModalLabel">Update Company Logo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-
-                <!-- Additional Items Section -->
-                <div class="additional-items">
-                    <div class="form-check mb-3">
-                        <input type="checkbox" class="form-check-input" id="addMoreItems">
-                        <label class="form-check-label" for="addMoreItems">Add more items to print</label>
+                <form action="{{ route('company.logo.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="logo">Select New Logo</label>
+                            <input type="file" class="form-control-file" id="logo" name="logo" accept="image/*" required>
+                        </div>
+                        <div id="logo-preview" class="mt-3 text-center">
+                            @if(file_exists(public_path('storage/company/logo.png')))
+                                <img src="{{ asset('storage/company/logo.png') }}" style="max-width: 200px;">
+                            @endif
+                        </div>
                     </div>
-                    
-                    <div id="additionalItemsContainer" style="display: none;">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Select</th>
-                                        <th>Asset ID</th>
-                                        <th>Name</th>
-                                        <th>Room</th>
-                                        <th>Copies</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($barang as $item)
-                                    <tr class="additional-item-row" data-asset-id="{{ $item->asset_tag }}">
-                                        <td>
-                                            <input type="checkbox" class="additional-item-check" 
-                                                data-id="{{ $item->asset_tag }}"
-                                                data-name="{{ $item->name }}"
-                                                data-room="{{ $item->room ? $item->room->name : 'No Room' }}"
-                                                data-year="{{ $item->purchase_date }}">
-                                        </td>
-                                        <td>{{ $item->asset_tag }}</td>
-                                        <td>{{ $item->name }}</td>
-                                        <td>{{ $item->room ? $item->room->name : 'No Room' }}</td>
-                                        <td>
-                                            <input type="number" class="form-control form-control-sm additional-quantity" 
-                                                min="1" value="1" style="width: 70px;" disabled>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Upload Logo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Dialog Modal -->
+    <div class="modal fade" id="printDialog" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Print Labels</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Primary Item Section -->
+                    <div class="primary-item mb-4">
+                        <h6>Primary Item</h6>
+                        <div class="form-group">
+                            <label>Selected Item: <span id="selectedItemName"></span></label>
+                        </div>
+                        <div class="form-group">
+                            <label for="printQuantity">Number of copies:</label>
+                            <input type="number" class="form-control" id="printQuantity" min="1" value="1">
+                        </div>
+                    </div>
+
+                    <!-- Additional Items Section -->
+                    <div class="additional-items">
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="addMoreItems">
+                            <label class="form-check-label" for="addMoreItems">Add more items to print</label>
+                        </div>
+                        
+                        <div id="additionalItemsContainer" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Select</th>
+                                            <th>Asset ID</th>
+                                            <th>Name</th>
+                                            <th>Room</th>
+                                            <th>Copies</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($barang as $item)
+                                        <tr class="additional-item-row" data-asset-id="{{ $item->asset_tag }}">
+                                            <td>
+                                                <input type="checkbox" class="additional-item-check" 
+                                                    data-id="{{ $item->asset_tag }}"
+                                                    data-name="{{ $item->name }}"
+                                                    data-room="{{ $item->room ? $item->room->name : 'No Room' }}"
+                                                    data-year="{{ $item->purchase_date }}">
+                                            </td>
+                                            <td>{{ $item->asset_tag }}</td>
+                                            <td>{{ $item->name }}</td>
+                                            <td>{{ $item->room ? $item->room->name : 'No Room' }}</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm additional-quantity" 
+                                                    min="1" value="1" style="width: 70px;" disabled>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Print Options -->
+                    <div class="print-options mt-4">
+                        <div class="form-group">
+                            <label for="printLayout">Print Style:</label>
+                            <select class="form-control" id="printLayout">
+                                <option value="single">Single Label Per Page</option>
+                                <option value="fill">Fill Page</option>
+                                <option value="merge">Merge All</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-
-                <!-- Print Options -->
-                <div class="print-options mt-4">
-                    <div class="form-group">
-                        <label for="printLayout">Print Style:</label>
-                        <select class="form-control" id="printLayout">
-                            <option value="single">Single Label Per Page</option>
-                            <option value="fill">Fill Page</option>
-                            <option value="merge">Merge All</option>
-                        </select>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="executePrint()">Print</button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="executePrint()">Print</button>
             </div>
         </div>
     </div>
-</div>
 @stop
 
 @section('js')

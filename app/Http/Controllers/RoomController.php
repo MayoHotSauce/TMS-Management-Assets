@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Asset;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -68,5 +69,14 @@ class RoomController extends Controller
             return redirect()->route('rooms.index')
                 ->with('error', 'An error occurred while trying to delete the room.');
         }
+    }
+
+    public function show(Room $room)
+    {
+        $assets = Asset::where('room_id', $room->id)
+            ->with(['category'])
+            ->get();
+        
+        return view('rooms.show', compact('room', 'assets'));
     }
 }

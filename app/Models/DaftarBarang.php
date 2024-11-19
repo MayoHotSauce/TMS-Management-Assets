@@ -7,21 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class DaftarBarang extends Model
 {
-    protected $table = 'assets';
+    protected $table = 'daftar_barang';
     protected $fillable = [
         'name',
-        'description',
-        'room_id',
+        'asset_tag',
         'category_id',
+        'room_id',
         'purchase_date',
         'purchase_cost',
         'status',
-        'asset_tag'
+        'manufacturer',
+        'model',
+        'serial_number',
+        'description'
     ];
 
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id');
+        return $this->belongsTo(Category::class);
     }
 
     public function room()
@@ -31,7 +34,7 @@ class DaftarBarang extends Model
 
     public function maintenanceLogs()
     {
-        return $this->hasMany(MaintenanceLog::class, 'barang_id', 'id');
+        return $this->hasMany(MaintenanceLog::class, 'barang_id');
     }
 
     public function transfers()

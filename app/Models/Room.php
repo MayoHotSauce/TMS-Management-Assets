@@ -18,4 +18,9 @@ class Room extends Model
     {
         return $this->hasMany(Barang::class, 'room', 'name');
     }
+
+    public function assets()
+    {
+        return $this->hasMany(Asset::class);
+    }
 }

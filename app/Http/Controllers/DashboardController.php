@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Asset;
 use App\Models\Maintenance;
+use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,35 +12,37 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Fetch total assets
         $totalAssets = Asset::count();
-
-        // Fetch total maintenance logs
+        $needMaintenance = Asset::where('status', 'need_maintenance')->count();
+        $inMaintenance = Asset::where('status', 'in_maintenance')->count();
         $totalMaintenance = Maintenance::count();
 
-        // Fetch maintenance logs with scheduled status
-        $needMaintenance = Maintenance::where('status', 'scheduled')->count();
-
-        // Fetch maintenance logs with pending status
-        $inMaintenance = Maintenance::where('status', 'pending')->count();
-
-        // Fetch maintenance logs that are due soon
-        $maintenances = Maintenance::where('due_date', '<=', now()->addDays(7))->get();
-
-        // Fetch recent assets
-        $recentDaftarBarang = DB::table('assets')
-            ->select('id', 'description')
+        // Query untuk 5 barang terbaru
+        $recentDaftarBarang = Asset::select('name', 'description')
             ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->take(5)  // Mengambil 5 data terbaru
             ->get();
 
-        // Fetch recent maintenance logs
-        $recentMaintenance = DB::table('maintenance_logs')
-            ->select('barang_id', 'description')
+        // Query untuk 5 maintenance terbaru
+        $recentMaintenance = Maintenance::with(['asset:id,name'])
+            ->select('id', 'barang_id', 'description')
             ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->take(5)  // Mengambil 5 data terbaru
             ->get();
 
-        return view('dashboard.index', compact('totalAssets', 'totalMaintenance', 'needMaintenance', 'inMaintenance', 'maintenances', 'recentDaftarBarang', 'recentMaintenance'));
+        // Query untuk rooms
+        $rooms = Room::withCount('assets')
+            ->orderBy('name')
+            ->get();
+
+        return view('dashboard.index', compact(
+            'totalAssets',
+            'needMaintenance',
+            'inMaintenance',
+            'totalMaintenance',
+            'recentDaftarBarang',
+            'recentMaintenance',
+            'rooms'
+        ));
     }
 }
