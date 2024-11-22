@@ -1,6 +1,6 @@
 @extends('adminlte::master')
 
-@section('title', 'Login')
+@section('title', 'TMS Management')
 
 @section('adminlte_css')
     @stack('css')
@@ -17,7 +17,7 @@
 
         <div class="card">
             <div class="card-body login-card-body">
-                <p class="login-box-msg">Sign in to start your session</p>
+                <p class="login-box-msg">Silakan Login untuk Akses Dashboard</p>
 
                 <form action="{{ route('login') }}" method="post">
                     @csrf
@@ -57,12 +57,12 @@
                             <div class="icheck-primary">
                                 <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                                 <label for="remember">
-                                    Remember Me
+                                    Ingat Saya
                                 </label>
                             </div>
                         </div>
                         <div class="col-4">
-                            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                            <button type="submit" class="btn btn-primary btn-block">Masuk</button>
                         </div>
                     </div>
                 </form>
