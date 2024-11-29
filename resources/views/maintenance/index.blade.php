@@ -114,7 +114,41 @@
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="card-title">Maintenance Logs List</h3>
-                <div>
+                <div class="d-flex align-items-center gap-3">
+                    {{-- Pagination controls --}}
+                    <div class="d-flex align-items-center">
+                        <span class="mr-2">
+                            Showing {{ $maintenanceLogs->firstItem() ?? 0 }}-{{ $maintenanceLogs->lastItem() ?? 0 }} 
+                            of {{ $maintenanceLogs->total() }}
+                        </span>
+                        <nav class="mx-2">
+                            <ul class="pagination pagination-sm mb-0">
+                                {{-- Previous Page Link --}}
+                                @if ($maintenanceLogs->onFirstPage())
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;</span>
+                                    </li>
+                                @else
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ $maintenanceLogs->previousPageUrl() }}&status={{ $currentStatus }}" rel="prev">&laquo;</a>
+                                    </li>
+                                @endif
+
+                                {{-- Next Page Link --}}
+                                @if ($maintenanceLogs->hasMorePages())
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ $maintenanceLogs->nextPageUrl() }}&status={{ $currentStatus }}" rel="next">&raquo;</a>
+                                    </li>
+                                @else
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;</span>
+                                    </li>
+                                @endif
+                            </ul>
+                        </nav>
+                    </div>
+
+                    {{-- Status filter dropdown --}}
                     <select id="statusFilter" class="form-control">
                         <option value="active" {{ $currentStatus == 'active' ? 'selected' : '' }}>Active Maintenance</option>
                         <option value="completed" {{ $currentStatus == 'completed' ? 'selected' : '' }}>Completed Maintenance</option>
@@ -175,13 +209,9 @@
                                 @endif
 
                                 @if($maintenance->status !== 'completed')
-                                    <form action="{{ route('maintenance.complete', $maintenance->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PUT')
-                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Tandai maintenance ini sebagai selesai?')">
-                                            <i class="fas fa-check"></i> Selesai
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="showStatusModal({{ $maintenance->id }})">
+                                        <i class="fas fa-check"></i> Selesai
+                                    </button>
                                 @endif
 
                                 <form action="{{ route('maintenance.destroy', $maintenance->id) }}" method="POST" class="d-inline">
@@ -210,41 +240,93 @@
         font-size: 0.9em;
         padding: 0.5em 0.75em;
     }
+    .pagination {
+        margin-bottom: 0;
+    }
+    .page-link {
+        padding: 0.25rem 0.5rem;
+    }
+    .d-flex.gap-3 > * {
+        margin-left: 0.5rem;
+    }
+    .pagination-sm .page-link {
+        font-size: 0.875rem;
+    }
 </style>
 @stop
 
 @section('js')
 <script>
+    function showStatusModal(maintenanceId) {
+        $('#updateStatusForm').attr('action', `{{ url('maintenance') }}/${maintenanceId}/complete`);
+        $('#statusModal').modal('show');
+    }
+
     $(document).ready(function() {
-        $('#statusFilter').change(function() {
-            let status = $(this).val();
-            window.location.href = "{{ route('maintenance.index') }}?status=" + status;
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
         });
 
-        // Pastikan status yang dipilih tetap terpilih setelah refresh
-        $('#statusFilter').val('{{ $currentStatus }}');
-
-        // Tambahkan kode untuk update status
-        $('.update-status').click(function() {
-            let maintenanceId = $(this).data('id');
-            let currentStatus = $(this).data('status');
+        $('#updateStatusForm').on('submit', function(e) {
+            e.preventDefault();
             
-            let newStatus = currentStatus === 'scheduled' ? 'pending' : 'scheduled';
-            
-            if(confirm('Update status to ' + newStatus + '?')) {
-                $.ajax({
-                    url: '/maintenance/' + maintenanceId,
-                    type: 'PUT',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        status: newStatus
-                    },
-                    success: function() {
-                        location.reload();
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'PUT',
+                data: $(this).serialize(),
+                success: function(response) {
+                    $('#statusModal').modal('hide');
+                    if (response.redirectUrl) {
+                        window.location.href = response.redirectUrl;
+                    } else {
+                        window.location.reload();
                     }
-                });
-            }
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    alert('Error updating status: ' + xhr.responseText);
+                }
+            });
+        });
+
+        // Status filter functionality
+        $('#statusFilter').change(function() {
+            let status = $(this).val();
+            window.location.href = `{{ route('maintenance.index') }}?status=${status}`;
         });
     });
 </script>
 @stop
+
+<div class="modal fade" id="statusModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Status Maintenance</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updateStatusForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Pilih Status:</label>
+                        <select name="status" class="form-control" required>
+                            <option value="scheduled">Dijadwalkan</option>
+                            <option value="pending">Sedang Dikerjakan</option>
+                            <option value="completed">Selesai</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

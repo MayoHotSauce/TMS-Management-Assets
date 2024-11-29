@@ -8,6 +8,7 @@ use App\Models\BarangSequence;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivityLogger;
 
 class DataBarangController extends Controller
 {
@@ -15,6 +16,15 @@ class DataBarangController extends Controller
     {
         $barang = Asset::with(['category', 'room'])->paginate(10);
         $categories = Category::all();
+        
+        ActivityLogger::log(
+            'view',
+            'barang',
+            'Viewed barang list',
+            null,
+            ['total_items' => $barang->total()]
+        );
+        
         return view('barang.index', compact('barang', 'categories'));
     }
 
@@ -22,6 +32,15 @@ class DataBarangController extends Controller
     {
         $categories = Category::all();
         $rooms = Room::all();
+        
+        ActivityLogger::log(
+            'view',
+            'barang',
+            'Accessed barang creation form',
+            null,
+            ['available_categories' => $categories->count(), 'available_rooms' => $rooms->count()]
+        );
+        
         return view('barang.create', compact('categories', 'rooms'));
     }
 
@@ -52,18 +71,22 @@ class DataBarangController extends Controller
             'purchase_cost' => 'required|numeric|min:0'
         ]);
 
-        // Format the purchase_date before saving
         $validated['purchase_date'] = date('Y-m-d', strtotime($request->purchase_date));
-        
-        // Add default values
         $validated['status'] = 'siap_dipakai';
         $validated['asset_tag'] = $this->generateId($request->room_id);
         
-        // Create the asset in assets table, not daftar_barang
         $barang = Asset::create($validated);
 
+        ActivityLogger::log(
+            'create',
+            'barang',
+            'Added new barang: ' . $barang->name,
+            null,
+            $barang->toArray()
+        );
+
         return redirect()->route('barang.index')
-                        ->with('success', 'Asset added successfully');
+                        ->with('success', 'Barang added successfully');
     }
 
     public function edit($id)
@@ -71,6 +94,15 @@ class DataBarangController extends Controller
         $barang = Asset::findOrFail($id);
         $categories = Category::all();
         $rooms = Room::all();
+        
+        ActivityLogger::log(
+            'view',
+            'barang',
+            'Accessed edit form for barang: ' . $barang->name,
+            null,
+            $barang->toArray()
+        );
+        
         return view('barang.edit', compact('barang', 'categories', 'rooms'));
     }
 
@@ -87,20 +119,59 @@ class DataBarangController extends Controller
             'purchase_cost' => 'required|numeric|min:0'
         ]);
 
-        // Format the purchase_date before saving
-        $validated['purchase_date'] = date('Y-m-d', strtotime($request->purchase_date));
+        $oldValues = $barang->toArray();
+        $oldRoom = $barang->room->name;
+        $oldCategory = $barang->category->name;
         
         $barang->update($validated);
-        
+        $barang->refresh();
+
+        $changes = [];
+        if ($oldValues['name'] !== $barang->name) {
+            $changes[] = "name from '{$oldValues['name']}' to '{$barang->name}'";
+        }
+        if ($oldValues['description'] !== $barang->description) {
+            $changes[] = "description from '{$oldValues['description']}' to '{$barang->description}'";
+        }
+        if ($oldRoom !== $barang->room->name) {
+            $changes[] = "room from '{$oldRoom}' to '{$barang->room->name}'";
+        }
+        if ($oldCategory !== $barang->category->name) {
+            $changes[] = "category from '{$oldCategory}' to '{$barang->category->name}'";
+        }
+        if ($oldValues['purchase_cost'] !== $barang->purchase_cost) {
+            $changes[] = "purchase cost from '{$oldValues['purchase_cost']}' to '{$barang->purchase_cost}'";
+        }
+
+        ActivityLogger::log(
+            'update',
+            'barang',
+            'Updated barang: ' . implode(', ', $changes),
+            $oldValues,
+            $barang->toArray()
+        );
+
         return redirect()->route('barang.index')
-                        ->with('success', 'Asset updated successfully');
+            ->with('success', 'Barang updated successfully');
     }
 
     public function destroy($id)
     {
         $barang = Asset::findOrFail($id);
+        $barangName = $barang->name;
+        $oldValues = $barang->toArray();
+        
         $barang->delete();
+
+        ActivityLogger::log(
+            'delete',
+            'barang',
+            'Deleted barang: ' . $barangName,
+            $oldValues,
+            null
+        );
+
         return redirect()->route('barang.index')
-                        ->with('success', 'Barang berhasil dihapus');
+                        ->with('success', 'Barang deleted successfully');
     }
 }

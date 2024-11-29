@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Asset;
 use Illuminate\Http\Request;
+use App\Services\ActivityLogger;
 
 class RoomController extends Controller
 {
     public function index()
     {
         $rooms = Room::latest()->get();
+        
         return view('rooms.index', compact('rooms'));
     }
 
@@ -28,7 +30,16 @@ class RoomController extends Controller
             'responsible_person' => 'nullable|string|max:255'
         ]);
 
-        Room::create($request->all());
+        $room = Room::create($request->all());
+
+        ActivityLogger::log(
+            'create',
+            'room',
+            'Created new room: ' . $room->name,
+            null,
+            $room->toArray()
+        );
+
         return redirect()->route('rooms.index')
             ->with('success', 'Room created successfully.');
     }
@@ -48,27 +59,55 @@ class RoomController extends Controller
             'responsible_person' => 'nullable|string|max:255'
         ]);
 
+        $oldValues = $room->toArray();
         $room->update($request->all());
+
+        $changes = [];
+        if ($oldValues['name'] !== $room->name) {
+            $changes[] = "name from '{$oldValues['name']}' to '{$room->name}'";
+        }
+        if ($oldValues['floor'] !== $room->floor) {
+            $changes[] = "floor from '{$oldValues['floor']}' to '{$room->floor}'";
+        }
+        if ($oldValues['building'] !== $room->building) {
+            $changes[] = "building from '{$oldValues['building']}' to '{$room->building}'";
+        }
+        if ($oldValues['capacity'] !== $room->capacity) {
+            $changes[] = "capacity from '{$oldValues['capacity']}' to '{$room->capacity}'";
+        }
+        if ($oldValues['responsible_person'] !== $room->responsible_person) {
+            $changes[] = "responsible person from '{$oldValues['responsible_person']}' to '{$room->responsible_person}'";
+        }
+
+        ActivityLogger::log(
+            'update',
+            'room',
+            'Updated room: ' . implode(', ', $changes),
+            $oldValues,
+            $room->toArray()
+        );
+
         return redirect()->route('rooms.index')
             ->with('success', 'Room updated successfully.');
     }
 
     public function destroy(Room $room)
     {
-        try {
-            $room->delete();
-            return redirect()->route('rooms.index')
-                ->with('success', 'Room deleted successfully.');
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Check if the error code is for foreign key constraint violation
-            if ($e->getCode() == 23000) {
-                return redirect()->route('rooms.index')
-                    ->with('error', 'Ruangan ini Dipake di Daftar barang dan tidak bisa Dihapus.');
-            }
-            // Handle other exceptions if necessary
-            return redirect()->route('rooms.index')
-                ->with('error', 'An error occurred while trying to delete the room.');
-        }
+        $roomName = $room->name;
+        $oldValues = $room->toArray();
+        
+        $room->delete();
+
+        ActivityLogger::log(
+            'delete',
+            'room',
+            'Deleted room: ' . $roomName,
+            $oldValues,
+            null
+        );
+
+        return redirect()->route('rooms.index')
+            ->with('success', 'Room deleted successfully.');
     }
 
     public function show(Room $room)

@@ -345,6 +345,11 @@ return [
             'url'  => 'pengajuan',
             'icon' => 'fas fa-file-invoice'
         ],
+        [
+            'text' => 'History',
+            'url'  => 'history',
+            'icon' => 'fas fa-history'
+        ],
     ],
     /*
     |--------------------------------------------------------------------------

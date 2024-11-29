@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Asset;
 use Illuminate\Http\Request;
+use App\Services\ActivityLogger;
 
 class AssetController extends Controller
 {
@@ -31,7 +32,16 @@ class AssetController extends Controller
             'status' => 'required|in:available,in_use,maintenance,retired'
         ]);
 
-        Asset::create($validated);
+        $asset = Asset::create($validated);
+
+        ActivityLogger::log(
+            'create',
+            'asset',
+            'Created new asset: ' . $asset->name,
+            null,
+            $asset->toArray()
+        );
+
         return redirect()->route('assets.index')->with('success', 'Asset created successfully');
     }
 }

@@ -6,6 +6,7 @@ use App\Mail\AssetRequestMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use App\Services\ActivityLogger;
 
 class AssetRequestController extends Controller
 {
@@ -55,11 +56,18 @@ class AssetRequestController extends Controller
             'approval_token' => $approval_token
         ]);
 
+        ActivityLogger::log(
+            'create',
+            'asset_request',
+            'Created new asset request: ' . $assetRequest->name,
+            null,
+            $assetRequest->toArray()
+        );
+
         Mail::to($validated['approver_email'])
             ->send(new AssetRequestMail($assetRequest));
 
-        return redirect()
-            ->route('pengajuan.index')
+        return redirect()->route('pengajuan.index')
             ->with('success', 'Pengajuan berhasil dikirim dan menunggu persetujuan.');
     }
 
@@ -77,13 +85,21 @@ class AssetRequestController extends Controller
             ->where('approval_token', $token)
             ->firstOrFail();
 
+        $oldValues = $assetRequest->toArray();
         $assetRequest->update([
             'status' => 'approved',
             'approved_at' => now()
         ]);
 
-        return redirect()
-            ->route('pengajuan.show', $id)
+        ActivityLogger::log(
+            'approve',
+            'asset_request',
+            'Approved asset request: ' . $assetRequest->name,
+            $oldValues,
+            $assetRequest->toArray()
+        );
+
+        return redirect()->route('pengajuan.show', $id)
             ->with('success', 'Asset request has been approved successfully.');
     }
 
@@ -93,12 +109,20 @@ class AssetRequestController extends Controller
             ->where('approval_token', $token)
             ->firstOrFail();
 
+        $oldValues = $assetRequest->toArray();
         $assetRequest->update([
             'status' => 'declined'
         ]);
 
-        return redirect()
-            ->route('pengajuan.show', $id)
+        ActivityLogger::log(
+            'decline',
+            'asset_request',
+            'Declined asset request: ' . $assetRequest->name,
+            $oldValues,
+            $assetRequest->toArray()
+        );
+
+        return redirect()->route('pengajuan.show', $id)
             ->with('success', 'Asset request has been declined.');
     }
 
@@ -152,5 +176,58 @@ class AssetRequestController extends Controller
 
         return view('approval.success')
             ->with('status', 'declined');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $assetRequest = AssetRequest::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required',
+            'category' => 'required',
+            'price' => 'required|numeric|min:0',
+            'description' => 'nullable',
+            'approver_email' => 'required|email'
+        ]);
+
+        $oldValues = $assetRequest->toArray();
+        $assetRequest->update($validated);
+
+        ActivityLogger::log(
+            'update',
+            'asset_request',
+            'Updated asset request: ' . $assetRequest->name,
+            $oldValues,
+            $assetRequest->toArray()
+        );
+
+        return redirect()->route('pengajuan.index')
+            ->with('success', 'Asset request updated successfully');
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $assetRequest = AssetRequest::findOrFail($id);
+        $oldValues = $assetRequest->toArray();
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,approved,declined'
+        ]);
+
+        $assetRequest->update([
+            'status' => $validated['status'],
+            'approved_at' => now()
+        ]);
+
+        ActivityLogger::log(
+            'update_status',
+            'asset_request',
+            'Updated asset request status to ' . $validated['status'] . ' for: ' . $assetRequest->name,
+            $oldValues,
+            $assetRequest->toArray()
+        );
+
+        return redirect()->route('pengajuan.index')
+            ->with('success', 'Status updated successfully');
     }
 }

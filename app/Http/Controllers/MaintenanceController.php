@@ -6,31 +6,31 @@ use App\Models\Asset;
 use App\Models\MaintenanceLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivityLogger;
 
 class MaintenanceController extends Controller
 {
     public function index(Request $request)
     {
-        // Ambil status dari request, default ke 'active'
-        $currentStatus = $request->get('status', 'active');
-        
         $query = MaintenanceLog::with('asset')->latest();
         
-        // Filter berdasarkan status
-        switch ($currentStatus) {
+        // Default to 'active' if no status is specified
+        $currentStatus = $request->status ?? 'active';
+        
+        // Handle status filtering
+        switch($currentStatus) {
             case 'active':
                 $query->whereIn('status', ['scheduled', 'pending']);
                 break;
             case 'completed':
                 $query->where('status', 'completed');
                 break;
-            case 'all':
-                // Tidak perlu filter untuk 'all'
-                break;
+            // 'all' will show everything
         }
 
-        $maintenanceLogs = $query->paginate(10)->withQueryString();
-        $assets = Asset::where('status', '!=', 'dalam_perbaikan')->get();
+        // Add pagination with 4 items per page
+        $maintenanceLogs = $query->paginate(4);
+        $assets = Asset::all();
 
         return view('maintenance.index', compact('maintenanceLogs', 'assets', 'currentStatus'));
     }
@@ -46,94 +46,117 @@ class MaintenanceController extends Controller
             'status' => 'required|in:scheduled,pending,completed'
         ]);
 
-        DB::transaction(function () use ($validated) {
-            // Buat maintenance log
-            $maintenance = MaintenanceLog::create($validated);
+        $maintenance = MaintenanceLog::create($validated);
 
-            // Update status asset berdasarkan status maintenance
-            $assetStatus = match($validated['status']) {
-                'scheduled' => 'dalam_perbaikan',
-                'pending' => 'dalam_perbaikan',
-                'completed' => 'siap_dipakai',
-                default => 'siap_dipakai'
-            };
-
-            Asset::where('id', $validated['barang_id'])
-                ->update(['status' => $assetStatus]);
-        });
+        ActivityLogger::log(
+            'create',
+            'maintenance',
+            'Created new maintenance log for: ' . $maintenance->asset->name,
+            null,
+            $maintenance->toArray()
+        );
 
         return redirect()->route('maintenance.index')
             ->with('success', 'Maintenance log created successfully');
     }
 
-    public function update(Request $request, MaintenanceLog $maintenance)
+    public function update(Request $request, $id)
     {
+        $maintenance = MaintenanceLog::findOrFail($id);
+        
         $validated = $request->validate([
-            'status' => 'required|in:scheduled,pending,completed'
+            'description' => 'required|string',
+            'maintenance_date' => 'required|date',
+            'cost' => 'required|numeric',
+            'performed_by' => 'required|string'
         ]);
 
-        DB::transaction(function () use ($maintenance, $validated) {
-            $maintenance->update([
-                'status' => $validated['status']
-            ]);
+        $oldValues = $maintenance->toArray();
+        $maintenance->update($validated);
 
-            // Update status asset berdasarkan status maintenance baru
-            $assetStatus = match($validated['status']) {
-                'scheduled' => 'dalam_perbaikan',
-                'pending' => 'dalam_perbaikan',
-                'completed' => 'siap_dipakai',
-                default => 'siap_dipakai'
-            };
-
-            Asset::where('id', $maintenance->barang_id)
-                ->update(['status' => $assetStatus]);
-        });
+        ActivityLogger::log(
+            'update',
+            'maintenance',
+            'Updated maintenance log for: ' . $maintenance->asset->name,
+            $oldValues,
+            $maintenance->toArray()
+        );
 
         return redirect()->route('maintenance.index')
-            ->with('success', 'Maintenance status updated successfully');
+            ->with('success', 'Maintenance log updated successfully');
     }
 
     public function destroy($id)
     {
         $maintenance = MaintenanceLog::findOrFail($id);
+        $oldValues = $maintenance->toArray();
+        
         $maintenance->delete();
 
+        ActivityLogger::log(
+            'delete',
+            'maintenance',
+            'Deleted maintenance log for: ' . $maintenance->asset->name,
+            $oldValues,
+            null
+        );
+
         return redirect()->route('maintenance.index')
-                        ->with('success', 'Maintenance log deleted successfully');
+            ->with('success', 'Maintenance log deleted successfully');
     }
 
-    public function complete(MaintenanceLog $maintenance)
+    public function complete(Request $request, $id)
     {
-        DB::transaction(function () use ($maintenance) {
-            $maintenance->update([
-                'status' => 'completed'
+        try {
+            $maintenance = MaintenanceLog::findOrFail($id);
+            $oldValues = $maintenance->toArray();
+            
+            $request->validate([
+                'status' => 'required|in:scheduled,pending,completed'
             ]);
 
-            Asset::where('id', $maintenance->barang_id)
-                ->update(['status' => 'siap_dipakai']);
-        });
+            $maintenance->status = $request->status;
+            $maintenance->save();
 
-        return redirect()->route('maintenance.index')
-            ->with('success', 'Maintenance marked as completed');
+            ActivityLogger::log(
+                'update_status',
+                'maintenance',
+                'Updated maintenance status to ' . $request->status . ' for: ' . $maintenance->asset->name,
+                $oldValues,
+                $maintenance->toArray()
+            );
+
+            $currentFilter = request('status', 'active');
+            return response()->json([
+                'message' => 'Status maintenance berhasil diperbarui',
+                'redirectUrl' => route('maintenance.index', ['status' => $currentFilter])
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function updateStatus(Request $request, MaintenanceLog $maintenance)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending'
+            'status' => 'required|in:scheduled,pending,completed'
         ]);
 
-        DB::transaction(function () use ($maintenance, $validated) {
-            $maintenance->update([
-                'status' => $validated['status']
-            ]);
+        $oldValues = $maintenance->toArray();
+        $oldStatus = $maintenance->status;
+        
+        $maintenance->update(['status' => $validated['status']]);
 
-            // Update status asset menjadi dalam_perbaikan
-            Asset::where('id', $maintenance->barang_id)
-                ->update(['status' => 'dalam_perbaikan']);
-        });
+        ActivityLogger::log(
+            'update_status',
+            'maintenance',
+            "Updated maintenance for '{$maintenance->asset->name}': status changed from '{$oldStatus}' to '{$validated['status']}'",
+            $oldValues,
+            $maintenance->toArray()
+        );
 
         return redirect()->route('maintenance.index')
-            ->with('success', 'Maintenance status updated to In Progress');
+            ->with('success', 'Status updated successfully');
     }
 }

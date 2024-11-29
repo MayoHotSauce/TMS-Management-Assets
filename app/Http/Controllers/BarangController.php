@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivityLogger;
 
 class BarangController extends Controller
 {
     public function index()
     {
-        // Enable query log untuk debugging
         DB::enableQueryLog();
         
         try {
@@ -21,14 +21,9 @@ class BarangController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->paginate(10);
 
-            // Log query yang dijalankan
-            \Log::info('Queries executed:', DB::getQueryLog());
-            \Log::info('Total records:', ['count' => $barang->total()]);
-
             return view('barang.index', compact('barang'));
             
         } catch (\Exception $e) {
-            \Log::error('Error in BarangController@index: ' . $e->getMessage());
             return view('barang.index')->with('error', 'Error loading data: ' . $e->getMessage());
         }
     }

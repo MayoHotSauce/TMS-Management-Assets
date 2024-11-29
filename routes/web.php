@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AssetRequestController;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\HistoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('barang', DataBarangController::class);
     Route::group(['middleware' => ['auth']], function () {
         Route::resource('maintenance', MaintenanceController::class);
-        Route::put('maintenance/{maintenance}/complete', [MaintenanceController::class, 'complete'])->name('maintenance.complete');
+        Route::put('/maintenance/{id}/complete', [MaintenanceController::class, 'complete'])->name('maintenance.complete');
         Route::put('maintenance/{maintenance}/update-status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.updateStatus');
     });
 });
@@ -97,3 +98,5 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
 
 Route::get('/barang', [App\Http\Controllers\BarangController::class, 'index'])->name('barang.index');
+
+Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
