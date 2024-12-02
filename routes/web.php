@@ -11,6 +11,7 @@ use App\Http\Controllers\AssetRequestController;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\StockController;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,3 +101,6 @@ Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show')
 Route::get('/barang', [App\Http\Controllers\BarangController::class, 'index'])->name('barang.index');
 
 Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
+
+Route::get('stock', [StockController::class, 'index'])->name('stock.index');
+Route::post('stock/confirm', [StockController::class, 'confirm'])->name('stock.confirm');
