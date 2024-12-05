@@ -104,3 +104,17 @@ Route::get('/history', [HistoryController::class, 'index'])->name('history.index
 
 Route::get('stock', [StockController::class, 'index'])->name('stock.index');
 Route::post('stock/confirm', [StockController::class, 'confirm'])->name('stock.confirm');
+
+Route::middleware(['auth'])->group(function () {
+    // Stock Management Routes
+    Route::prefix('stock')->name('stock.')->middleware(['auth'])->group(function () {
+        Route::get('/', [StockController::class, 'index'])->name('index');
+        Route::get('/list', [StockController::class, 'stockList'])->name('list');
+        Route::get('/show/{id}', [StockController::class, 'show'])->name('show');
+        Route::post('/update', [StockController::class, 'update'])->name('update');
+        Route::post('/confirm', [StockController::class, 'confirm'])->name('confirm');
+        
+        // Make sure this route is BEFORE the catch-all show route
+        Route::get('/download/csv/{id}', [StockController::class, 'downloadCsv'])->name('download.csv');
+    });
+});

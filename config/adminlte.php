@@ -351,9 +351,20 @@ return [
             'icon' => 'fas fa-history'
         ],
         [
-            'text' => 'Stock',
-            'url'  => 'stock',
+            'text' => 'Stock Management',
             'icon' => 'fas fa-box',
+            'submenu' => [
+                [
+                    'text' => 'Asset Check',
+                    'url'  => 'stock',
+                    'icon' => 'fas fa-clipboard-check'
+                ],
+                [
+                    'text' => 'Stock Check List',
+                    'url'  => 'stock/list',
+                    'icon' => 'fas fa-list'
+                ],
+            ],
         ],
     ],
     /*
