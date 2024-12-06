@@ -209,9 +209,9 @@
                                 @endif
 
                                 @if($maintenance->status !== 'completed')
-                                    <button type="button" class="btn btn-success btn-sm" onclick="showStatusModal({{ $maintenance->id }})">
+                                    <a href="{{ route('maintenance.showCompletion', $maintenance->id) }}" class="btn btn-success btn-sm">
                                         <i class="fas fa-check"></i> Selesai
-                                    </button>
+                                    </a>
                                 @endif
 
                                 <form action="{{ route('maintenance.destroy', $maintenance->id) }}" method="POST" class="d-inline">

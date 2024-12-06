@@ -337,8 +337,19 @@ return [
         ],
         [
             'text' => 'Perbaikan',
-            'url'  => 'maintenance',
-            'icon' => 'fas fa-tools'
+            'icon' => 'fas fa-tools',
+            'submenu' => [
+                [
+                    'text' => 'Daftar Perbaikan',
+                    'url'  => 'maintenance',
+                    'icon' => 'fas fa-list'
+                ],
+                [
+                    'text' => 'Approval Perbaikan',
+                    'url'  => 'maintenance/approvals',
+                    'icon' => 'fas fa-check-circle'
+                ],
+            ],
         ],
         [
             'text' => 'Pengajuan',
@@ -351,16 +362,16 @@ return [
             'icon' => 'fas fa-history'
         ],
         [
-            'text' => 'Stock Management',
+            'text' => 'Stock Of Name',
             'icon' => 'fas fa-box',
             'submenu' => [
                 [
-                    'text' => 'Asset Check',
+                    'text' => 'Pengecekan Asset',
                     'url'  => 'stock',
                     'icon' => 'fas fa-clipboard-check'
                 ],
                 [
-                    'text' => 'Stock Check List',
+                    'text' => 'List Pengecekan Asset',
                     'url'  => 'stock/list',
                     'icon' => 'fas fa-list'
                 ],

@@ -159,4 +159,94 @@ class MaintenanceController extends Controller
         return redirect()->route('maintenance.index')
             ->with('success', 'Status updated successfully');
     }
+
+    public function showCompletionForm($id)
+    {
+        $maintenance = MaintenanceLog::with('asset')->findOrFail($id);
+        return view('maintenance.completion_form', compact('maintenance'));
+    }
+
+    public function submitCompletion(Request $request)
+    {
+        $validated = $request->validate([
+            'maintenance_id' => 'required|exists:maintenance_logs,id',
+            'completion_date' => 'required|date',
+            'actions_taken' => 'required|string',
+            'results' => 'required|string',
+            'replaced_parts' => 'nullable|string',
+            'total_cost' => 'nullable|numeric',
+            'equipment_status' => 'required|in:fully_repaired,partially_repaired,needs_replacement',
+            'recommendations' => 'nullable|string',
+            'additional_notes' => 'nullable|string',
+            'technician_name' => 'required|string',
+            'follow_up_priority' => 'required|in:low,medium,high'
+        ]);
+
+        $maintenance = MaintenanceLog::findOrFail($request->maintenance_id);
+        $oldValues = $maintenance->toArray();
+
+        $maintenance->update([
+            'completion_date' => $validated['completion_date'],
+            'actions_taken' => $validated['actions_taken'],
+            'results' => $validated['results'],
+            'replaced_parts' => $validated['replaced_parts'],
+            'total_cost' => $validated['total_cost'],
+            'equipment_status' => $validated['equipment_status'],
+            'recommendations' => $validated['recommendations'],
+            'additional_notes' => $validated['additional_notes'],
+            'technician_name' => $validated['technician_name'],
+            'follow_up_priority' => $validated['follow_up_priority'],
+            'status' => 'pending_approval'
+        ]);
+
+        ActivityLogger::log(
+            'complete_maintenance',
+            'maintenance',
+            'Completed maintenance for: ' . $maintenance->asset->name,
+            $oldValues,
+            $maintenance->toArray()
+        );
+
+        return redirect()->route('maintenance.index')
+            ->with('success', 'Maintenance telah selesai dan menunggu persetujuan.');
+    }
+
+    public function approvalList()
+    {
+        $pendingApprovals = MaintenanceLog::with('asset')
+            ->where('status', 'pending_approval')
+            ->latest()
+            ->paginate(10);
+        
+        return view('maintenance.approval_list', compact('pendingApprovals'));
+    }
+
+    public function approve(Request $request, $id)
+    {
+        $maintenance = MaintenanceLog::findOrFail($id);
+        $oldValues = $maintenance->toArray();
+
+        $maintenance->update([
+            'status' => 'completed',
+            'approved_at' => now(),
+            'approved_by' => auth()->user()->name ?? 'System Admin' // Update this when you have proper auth
+        ]);
+
+        ActivityLogger::log(
+            'approve_maintenance',
+            'maintenance',
+            'Approved maintenance completion for: ' . $maintenance->asset->name,
+            $oldValues,
+            $maintenance->toArray()
+        );
+
+        return redirect()->route('maintenance.approvals')
+            ->with('success', 'Maintenance telah disetujui.');
+    }
+
+    public function show($id)
+    {
+        $maintenance = MaintenanceLog::with('asset')->findOrFail($id);
+        return view('maintenance.show', compact('maintenance'));
+    }
 }

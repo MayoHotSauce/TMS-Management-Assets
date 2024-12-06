@@ -12,10 +12,23 @@ class MaintenanceLog extends Model
         'maintenance_date',
         'cost',
         'performed_by',
-        'status'
+        'status',
+        'completion_date',
+        'actions_taken',
+        'results',
+        'replaced_parts',
+        'total_cost',
+        'equipment_status',
+        'recommendations',
+        'additional_notes',
+        'technician_name',
+        'follow_up_priority'
     ];
 
-    protected $dates = ['maintenance_date'];
+    protected $dates = [
+        'maintenance_date',
+        'completion_date'
+    ];
 
     public function asset()
     {
