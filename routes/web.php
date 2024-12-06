@@ -42,16 +42,24 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('rooms', RoomController::class);
     Route::resource('barang', DataBarangController::class);
 
-    // Maintenance routes - make sure index route is first
+    // Maintenance routes - order matters!
     Route::get('/maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
+    Route::get('/maintenance/create', [MaintenanceController::class, 'create'])->name('maintenance.create');
     Route::get('/maintenance/approvals', [MaintenanceController::class, 'approvalList'])->name('maintenance.approvals');
+    
+    // Status update route
+    Route::put('/maintenance/{id}/status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.updateStatus');
+    
+    // Completion routes
     Route::get('/maintenance/{id}/complete', [MaintenanceController::class, 'showCompletionForm'])->name('maintenance.showCompletion');
-    Route::post('/maintenance/complete', [MaintenanceController::class, 'submitCompletion'])->name('maintenance.complete');
-    Route::put('/maintenance/{id}/complete', [MaintenanceController::class, 'complete'])->name('maintenance.complete');
-    Route::put('maintenance/{maintenance}/update-status', [MaintenanceController::class, 'updateStatus'])->name('maintenance.updateStatus');
+    Route::post('/maintenance/{id}/complete', [MaintenanceController::class, 'submitCompletion'])->name('maintenance.complete');
+    
+    // Approval routes
     Route::post('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
     Route::get('/maintenance/{id}', [MaintenanceController::class, 'show'])->name('maintenance.show');
-    Route::resource('maintenance', MaintenanceController::class)->except(['index', 'show']);
+    
+    // Delete route
+    Route::delete('/maintenance/{id}', [MaintenanceController::class, 'destroy'])->name('maintenance.destroy');
 });
 
 // Test Route
