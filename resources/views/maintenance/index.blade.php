@@ -43,57 +43,59 @@
                 </thead>
                 <tbody>
                     @forelse($maintenanceLogs as $maintenance)
-                        <tr>
-                            <td>{{ optional($maintenance->asset)->name ?? 'No Asset' }}</td>
-                            <td>{{ $maintenance->description }}</td>
-                            <td>{{ date('d/m/Y', strtotime($maintenance->maintenance_date)) }}</td>
-                            <td>Rp {{ number_format($maintenance->cost, 0, ',', '.') }}</td>
-                            <td>{{ $maintenance->performed_by }}</td>
-                            <td>
-                                @php
-                                    $statusLabels = [
-                                        'scheduled' => 'Dijadwalkan',
-                                        'pending' => 'Sedang Dikerjakan',
-                                        'completed' => 'Selesai'
-                                    ];
+                        @if($maintenance->approval_status === 'approved')
+                            <tr>
+                                <td>{{ optional($maintenance->asset)->name ?? 'No Asset' }}</td>
+                                <td>{{ $maintenance->description }}</td>
+                                <td>{{ date('d/m/Y', strtotime($maintenance->maintenance_date)) }}</td>
+                                <td>Rp {{ number_format($maintenance->cost, 0, ',', '.') }}</td>
+                                <td>{{ $maintenance->performed_by }}</td>
+                                <td>
+                                    @php
+                                        $statusLabels = [
+                                            'scheduled' => 'Dijadwalkan',
+                                            'pending' => 'Sedang Dikerjakan',
+                                            'completed' => 'Selesai'
+                                        ];
 
-                                    $statusClass = [
-                                        'scheduled' => 'warning',
-                                        'pending' => 'info',
-                                        'completed' => 'success'
-                                    ];
-                                @endphp
-                                <span class="badge badge-{{ $statusClass[$maintenance->status] ?? 'secondary' }}">
-                                    {{ $statusLabels[$maintenance->status] ?? $maintenance->status }}
-                                </span>
-                            </td>
-                            <td>
-                                @if($maintenance->status === 'scheduled')
-                                    <form action="{{ route('maintenance.updateStatus', $maintenance->id) }}" method="POST" class="d-inline">
+                                        $statusClass = [
+                                            'scheduled' => 'warning',
+                                            'pending' => 'info',
+                                            'completed' => 'success'
+                                        ];
+                                    @endphp
+                                    <span class="badge badge-{{ $statusClass[$maintenance->status] ?? 'secondary' }}">
+                                        {{ $statusLabels[$maintenance->status] ?? $maintenance->status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($maintenance->status === 'scheduled')
+                                        <form action="{{ route('maintenance.updateStatus', $maintenance->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="status" value="pending">
+                                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Mulai kerjakan maintenance ini?')">
+                                                <i class="fas fa-tools"></i> Mulai Kerjakan
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if($maintenance->status !== 'completed')
+                                        <a href="{{ route('maintenance.showCompletion', $maintenance->id) }}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check"></i> Selesai
+                                        </a>
+                                    @endif
+
+                                    <form action="{{ route('maintenance.destroy', $maintenance->id) }}" method="POST" class="d-inline">
                                         @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="status" value="pending">
-                                        <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Mulai kerjakan maintenance ini?')">
-                                            <i class="fas fa-tools"></i> Mulai Kerjakan
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Anda yakin ingin menghapus?')">
+                                            <i class="fas fa-trash"></i> Hapus
                                         </button>
                                     </form>
-                                @endif
-
-                                @if($maintenance->status !== 'completed')
-                                    <a href="{{ route('maintenance.showCompletion', $maintenance->id) }}" class="btn btn-success btn-sm">
-                                        <i class="fas fa-check"></i> Selesai
-                                    </a>
-                                @endif
-
-                                <form action="{{ route('maintenance.destroy', $maintenance->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Anda yakin ingin menghapus?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        @endif
                     @empty
                         <tr>
                             <td colspan="7" class="text-center">No maintenance logs found.</td>

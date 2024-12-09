@@ -15,7 +15,7 @@ class Maintenance extends Model
         'cost',
         'performed_by',
         'status',
-        'updated_at'
+        'approval_status'
     ];
 
     protected $casts = [

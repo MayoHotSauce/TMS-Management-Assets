@@ -7,6 +7,7 @@ use App\Models\MaintenanceLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 
 class MaintenanceController extends Controller
 {
@@ -39,25 +40,19 @@ class MaintenanceController extends Controller
     {
         $validated = $request->validate([
             'barang_id' => 'required|exists:assets,id',
-            'description' => 'required|string',
             'maintenance_date' => 'required|date',
+            'description' => 'required|string',
             'cost' => 'required|numeric',
             'performed_by' => 'required|string',
-            'status' => 'required|in:scheduled,pending,completed'
+            'status' => 'required|string'
         ]);
 
-        $maintenance = MaintenanceLog::create($validated);
-
-        ActivityLogger::log(
-            'create',
-            'maintenance',
-            'Created new maintenance log for: ' . $maintenance->asset->name,
-            null,
-            $maintenance->toArray()
-        );
+        $maintenance = new MaintenanceLog($validated);
+        $maintenance->approval_status = 'pending';
+        $maintenance->save();
 
         return redirect()->route('maintenance.index')
-            ->with('success', 'Maintenance log created successfully');
+            ->with('success', 'Maintenance request has been submitted and is waiting for approval.');
     }
 
     public function update(Request $request, $id)
@@ -218,24 +213,29 @@ class MaintenanceController extends Controller
 
     public function approvalList()
     {
-        $pendingApprovals = MaintenanceLog::where('status', 'pending_approval')
+        // Get initial maintenance requests waiting for approval
+        $initialApprovals = MaintenanceLog::where('approval_status', 'pending')
+            ->whereNull('completion_date')  // Haven't been completed yet
             ->with('asset')
-            ->paginate(10);
-        
-        return view('maintenance.approval_list', compact('pendingApprovals'));
+            ->latest()
+            ->paginate(5, ['*'], 'initial_page');
+
+        // Get completed maintenance waiting for final approval
+        $finalApprovals = MaintenanceLog::where('status', 'pending_approval')
+            ->whereNotNull('completion_date')  // Has completion details
+            ->with('asset')
+            ->latest()
+            ->paginate(5, ['*'], 'final_page');
+
+        return view('maintenance.approval_list', compact('initialApprovals', 'finalApprovals'));
     }
 
-    public function approve(Request $request, $id)
+    public function approve(MaintenanceLog $maintenance): \Illuminate\Http\RedirectResponse
     {
-        try {
-            $maintenance = MaintenanceLog::findOrFail($id);
-            $maintenance->update(['status' => 'completed']);
-            
-            return redirect()->route('maintenance.approvals')
-                ->with('success', 'Maintenance berhasil disetujui.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat menyetujui maintenance.');
-        }
+        $maintenance->approval_status = 'approved';
+        $maintenance->save();
+
+        return redirect()->back()->with('success', 'Maintenance request has been approved.');
     }
 
     public function show($id)

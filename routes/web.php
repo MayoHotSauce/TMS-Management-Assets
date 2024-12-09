@@ -55,11 +55,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/maintenance/{id}/complete', [MaintenanceController::class, 'submitCompletion'])->name('maintenance.complete');
     
     // Approval routes
-    Route::post('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
+    Route::post('/maintenance/{maintenance}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
     Route::get('/maintenance/{id}', [MaintenanceController::class, 'show'])->name('maintenance.show');
     
     // Delete route
     Route::delete('/maintenance/{id}', [MaintenanceController::class, 'destroy'])->name('maintenance.destroy');
+
+    Route::post('/maintenance', [MaintenanceController::class, 'store'])->name('maintenance.store');
 });
 
 // Test Route
