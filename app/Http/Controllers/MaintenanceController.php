@@ -13,46 +13,76 @@ class MaintenanceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MaintenanceLog::with('asset')->latest();
-        
-        // Default to 'active' if no status is specified
-        $currentStatus = $request->status ?? 'active';
-        
-        // Handle status filtering
-        switch($currentStatus) {
-            case 'active':
-                $query->whereIn('status', ['scheduled', 'pending']);
-                break;
-            case 'completed':
-                $query->where('status', 'completed');
-                break;
-            // 'all' will show everything
-        }
+        $currentStatus = $request->get('status', 'active'); // Default to 'active' if not set
 
-        // Add pagination with 4 items per page
-        $maintenanceLogs = $query->paginate(4);
-        $assets = Asset::all();
-
-        return view('maintenance.index', compact('maintenanceLogs', 'assets', 'currentStatus'));
+        $maintenanceLogs = MaintenanceLog::with('asset')
+            ->whereIn('status', ['in_progress', 'scheduled', 'pending_completion', 'pending_final_approval'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+        
+        return view('maintenance.index', compact('maintenanceLogs', 'currentStatus'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'barang_id' => 'required|exists:assets,id',
-            'maintenance_date' => 'required|date',
-            'description' => 'required|string',
-            'cost' => 'required|numeric',
-            'performed_by' => 'required|string',
-            'status' => 'required|string'
-        ]);
+        try {
+            $validated = $request->validate([
+                'barang_id' => 'required|exists:assets,id',
+                'maintenance_date' => 'required|date',
+                'description' => 'required|string',
+                'cost' => 'required|numeric',
+                'performed_by' => 'required|string'
+            ]);
 
-        $maintenance = new MaintenanceLog($validated);
-        $maintenance->approval_status = 'pending';
-        $maintenance->save();
+            \Log::info('Request data:', $request->all());
 
-        return redirect()->route('maintenance.index')
-            ->with('success', 'Maintenance request has been submitted and is waiting for approval.');
+            DB::beginTransaction();
+
+            $maintenance = new MaintenanceLog();
+            $maintenance->barang_id = $validated['barang_id'];
+            $maintenance->maintenance_date = $validated['maintenance_date'];
+            $maintenance->description = $validated['description'];
+            $maintenance->cost = $validated['cost'];
+            $maintenance->performed_by = $validated['performed_by'];
+            $maintenance->status = 'scheduled';
+            
+            \Log::info('Maintenance object before save:', $maintenance->toArray());
+            
+            $maintenance->save();
+            
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Maintenance log berhasil dibuat'
+                ]);
+            }
+
+            return redirect()->route('maintenance.index')
+                ->with('success', 'Maintenance log berhasil dibuat');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error in maintenance creation:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function update(Request $request, $id)
@@ -100,35 +130,46 @@ class MaintenanceController extends Controller
             ->with('success', 'Maintenance log deleted successfully');
     }
 
-    public function complete(Request $request, $id)
+    public function complete(Request $request, Maintenance $maintenance)
     {
         try {
-            $maintenance = MaintenanceLog::findOrFail($id);
-            $oldValues = $maintenance->toArray();
-            
-            $request->validate([
-                'status' => 'required|in:scheduled,pending,completed'
+            $validated = $request->validate([
+                'completion_date' => 'required|date',
+                'actions_taken' => 'required|string',
+                'results' => 'required|string',
+                'replaced_parts' => 'nullable|string',
+                'total_cost' => 'required|numeric',
+                'equipment_status' => 'required|string',
+                'recommendations' => 'nullable|string',
+                'additional_notes' => 'nullable|string',
+                'technician_name' => 'required|string',
+                'follow_up_priority' => 'required|string'
             ]);
 
-            $maintenance->status = $request->status;
-            $maintenance->save();
+            // Update maintenance record with completion details
+            $maintenance->update([
+                'completion_date' => $validated['completion_date'],
+                'actions_taken' => $validated['actions_taken'],
+                'results' => $validated['results'],
+                'replaced_parts' => $validated['replaced_parts'],
+                'total_cost' => $validated['total_cost'],
+                'equipment_status' => $validated['equipment_status'],
+                'recommendations' => $validated['recommendations'],
+                'additional_notes' => $validated['additional_notes'],
+                'technician_name' => $validated['technician_name'],
+                'follow_up_priority' => $validated['follow_up_priority'],
+                'status' => 'pending_final_approval' // Important: Update status to pending final approval
+            ]);
 
-            ActivityLogger::log(
-                'update_status',
-                'maintenance',
-                'Updated maintenance status to ' . $request->status . ' for: ' . $maintenance->asset->name,
-                $oldValues,
-                $maintenance->toArray()
-            );
-
-            $currentFilter = request('status', 'active');
             return response()->json([
-                'message' => 'Status maintenance berhasil diperbarui',
-                'redirectUrl' => route('maintenance.index', ['status' => $currentFilter])
+                'success' => true,
+                'message' => 'Maintenance completion recorded successfully'
             ]);
-
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -157,85 +198,122 @@ class MaintenanceController extends Controller
 
     public function showCompletionForm($id)
     {
-        $maintenance = MaintenanceLog::with('asset')->findOrFail($id);
+        $maintenance = MaintenanceLog::findOrFail($id);
         return view('maintenance.completion_form', compact('maintenance'));
     }
 
     public function submitCompletion(Request $request, $id)
     {
+        $maintenance = MaintenanceLog::findOrFail($id);
+        
         $validated = $request->validate([
             'completion_date' => 'required|date',
+            'technician' => 'required|string',
             'actions_taken' => 'required|string',
-            'results' => 'required|string',
+            'repair_result' => 'required|string',
             'replaced_parts' => 'nullable|string',
             'total_cost' => 'required|numeric',
-            'equipment_status' => 'required|string',
+            'equipment_status' => 'nullable|string',
+            'next_priority' => 'nullable|string',
             'recommendations' => 'nullable|string',
-            'additional_notes' => 'nullable|string',
-            'technician_name' => 'required|string',
-            'follow_up_priority' => 'required|string'
+            'additional_notes' => 'nullable|string'
         ]);
 
-        DB::beginTransaction();
-        
-        try {
-            $maintenance = MaintenanceLog::findOrFail($id);
-            
-            $maintenance->update([
-                'completion_date' => $validated['completion_date'],
-                'actions_taken' => $validated['actions_taken'],
-                'results' => $validated['results'],
-                'replaced_parts' => $validated['replaced_parts'],
-                'total_cost' => $validated['total_cost'],
-                'equipment_status' => $validated['equipment_status'],
-                'recommendations' => $validated['recommendations'],
-                'additional_notes' => $validated['additional_notes'],
-                'technician_name' => $validated['technician_name'],
-                'follow_up_priority' => $validated['follow_up_priority'],
-                'status' => 'pending_approval'
-            ]);
+        $maintenance->update([
+            'completion_date' => $validated['completion_date'],
+            'technician' => $validated['technician'],
+            'actions_taken' => $validated['actions_taken'],
+            'repair_result' => $validated['repair_result'],
+            'replaced_parts' => $validated['replaced_parts'],
+            'total_cost' => $validated['total_cost'],
+            'equipment_status' => $validated['equipment_status'],
+            'next_priority' => $validated['next_priority'],
+            'recommendations' => $validated['recommendations'],
+            'additional_notes' => $validated['additional_notes'],
+            'status' => 'pending_final_approval'
+        ]);
 
-            DB::commit();
-            
-            // Add session flash message
-            session()->flash('success', 'Maintenance telah selesai dan menunggu persetujuan.');
-            
-            // Redirect to index
-            return redirect()->route('maintenance.index');
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
-        }
+        return redirect()->route('maintenance.index')
+            ->with('success', 'Formulir penyelesaian telah disetujui untuk persetujuan akhir');
     }
 
     public function approvalList()
     {
-        // Get initial maintenance requests waiting for approval
+        // For initial approvals (new maintenance requests)
         $initialApprovals = MaintenanceLog::where('approval_status', 'pending')
-            ->whereNull('completion_date')  // Haven't been completed yet
             ->with('asset')
-            ->latest()
-            ->paginate(5, ['*'], 'initial_page');
+            ->paginate(10);
 
-        // Get completed maintenance waiting for final approval
-        $finalApprovals = MaintenanceLog::where('status', 'pending_approval')
-            ->whereNotNull('completion_date')  // Has completion details
+        // For final approvals (completed maintenance waiting for final approval)
+        $finalApprovals = MaintenanceLog::where('status', 'pending_final_approval')
             ->with('asset')
-            ->latest()
-            ->paginate(5, ['*'], 'final_page');
+            ->paginate(10);
+
+        // Debug information
+        \Log::info('Initial Approvals Count: ' . $initialApprovals->count());
+        \Log::info('Final Approvals Count: ' . $finalApprovals->count());
 
         return view('maintenance.approval_list', compact('initialApprovals', 'finalApprovals'));
     }
 
-    public function approve(MaintenanceLog $maintenance): \Illuminate\Http\RedirectResponse
+    public function approve($id)
     {
-        $maintenance->approval_status = 'approved';
-        $maintenance->save();
-
-        return redirect()->back()->with('success', 'Maintenance request has been approved.');
+        try {
+            $maintenance = MaintenanceLog::findOrFail($id);
+            $message = '';
+            
+            DB::beginTransaction();
+            
+            // Debug current status
+            \Log::info('Current status: ' . $maintenance->status);
+            \Log::info('Current approval_status: ' . $maintenance->approval_status);
+            
+            // Check if maintenance is already completed
+            if ($maintenance->status === 'completed') {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status perbaikan saat ini: completed. Tidak dapat diproses.'
+                ]);
+            }
+            
+            // Initial approval
+            if ($maintenance->status === 'scheduled' || $maintenance->status === 'pending') {
+                $maintenance->update([
+                    'status' => 'in_progress',
+                    'approval_status' => 'approved'
+                ]);
+                $message = 'Persetujuan berhasil. Perbaikan dapat dimulai.';
+            }
+            // Final approval
+            else if ($maintenance->status === 'pending_final_approval') {
+                $maintenance->update([
+                    'status' => 'completed',
+                    'approval_status' => 'final_approved'
+                ]);
+                $message = 'Persetujuan akhir berhasil. Perbaikan telah selesai.';
+            }
+            else {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status perbaikan saat ini: ' . $maintenance->status . '. Tidak dapat diproses.'
+                ]);
+            }
+            
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function show($id)
@@ -248,5 +326,45 @@ class MaintenanceController extends Controller
     {
         $assets = Asset::all();
         return view('maintenance.create', compact('assets'));
+    }
+
+    public function completeExisting(Request $request, $id)
+    {
+        $maintenance = MaintenanceLog::findOrFail($id);
+
+        $validated = $request->validate([
+            'actions_taken' => 'required|string',
+            'results' => 'required|string',
+            'replaced_parts' => 'nullable|string',
+            'total_cost' => 'required|numeric',
+            'recommendations' => 'nullable|string'
+        ]);
+
+        $maintenance->update([
+            'actions_taken' => $validated['actions_taken'],
+            'results' => $validated['results'],
+            'replaced_parts' => $validated['replaced_parts'],
+            'total_cost' => $validated['total_cost'],
+            'recommendations' => $validated['recommendations'],
+            'status' => 'pending_final_approval'
+        ]);
+
+        return redirect()->route('maintenance.index')
+            ->with('success', 'Maintenance completion form submitted for final approval');
+    }
+
+    public function startWork($id)
+    {
+        $maintenance = MaintenanceLog::findOrFail($id);
+        $maintenance->status = 'in_progress';
+        $maintenance->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function showApprovalDetail($id)
+    {
+        $maintenance = MaintenanceLog::with('asset')->findOrFail($id);
+        return view('maintenance.approval_detail', compact('maintenance'));
     }
 }

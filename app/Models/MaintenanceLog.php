@@ -8,21 +8,12 @@ class MaintenanceLog extends Model
 {
     protected $fillable = [
         'barang_id',
-        'description',
         'maintenance_date',
+        'description',
         'cost',
         'performed_by',
         'status',
-        'completion_date',
-        'actions_taken',
-        'results',
-        'replaced_parts',
-        'total_cost',
-        'equipment_status',
-        'recommendations',
-        'additional_notes',
-        'technician_name',
-        'follow_up_priority'
+        'approval_status'
     ];
 
     protected $dates = [

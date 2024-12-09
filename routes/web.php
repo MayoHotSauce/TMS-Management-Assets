@@ -52,10 +52,11 @@ Route::middleware(['auth'])->group(function () {
     
     // Completion routes
     Route::get('/maintenance/{id}/complete', [MaintenanceController::class, 'showCompletionForm'])->name('maintenance.showCompletion');
-    Route::post('/maintenance/{id}/complete', [MaintenanceController::class, 'submitCompletion'])->name('maintenance.complete');
+    Route::post('/maintenance/{id}/complete', 'MaintenanceController@complete')->name('maintenance.complete');
+    Route::post('/maintenance/{id}/submit-completion', 'MaintenanceController@submitCompletion')->name('maintenance.submit-completion');
     
     // Approval routes
-    Route::post('/maintenance/{maintenance}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
+    Route::post('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
     Route::get('/maintenance/{id}', [MaintenanceController::class, 'show'])->name('maintenance.show');
     
     // Delete route
@@ -134,3 +135,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/download/csv/{id}', [StockController::class, 'downloadCsv'])->name('download.csv');
     });
 });
+
+// Add this new route for the approval list
+Route::get('/maintenance/approval-list', [MaintenanceController::class, 'approvalList'])->name('maintenance.approval-list');
+Route::post('/maintenance/{id}/submit-completion', [MaintenanceController::class, 'submitCompletion'])->name('maintenance.submit-completion');
+Route::post('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
+
+Route::get('/maintenance/{id}/completion-form', [MaintenanceController::class, 'showCompletionForm'])->name('maintenance.completion-form');
+Route::put('/maintenance/{id}/submit-completion', [MaintenanceController::class, 'submitCompletion'])->name('maintenance.submit-completion');
+
+Route::put('/maintenance/{id}/start', [MaintenanceController::class, 'startWork'])->name('maintenance.start');
+
+Route::get('/maintenance/{id}/approval-detail', [MaintenanceController::class, 'showApprovalDetail'])->name('maintenance.approval-detail');

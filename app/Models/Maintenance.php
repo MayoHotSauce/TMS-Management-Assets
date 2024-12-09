@@ -15,7 +15,17 @@ class Maintenance extends Model
         'cost',
         'performed_by',
         'status',
-        'approval_status'
+        'approval_status',
+        'completion_date',
+        'actions_taken',
+        'results',
+        'replaced_parts',
+        'total_cost',
+        'equipment_status',
+        'recommendations',
+        'additional_notes',
+        'technician_name',
+        'follow_up_priority'
     ];
 
     protected $casts = [
