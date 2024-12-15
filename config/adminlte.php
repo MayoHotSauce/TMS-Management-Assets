@@ -352,9 +352,25 @@ return [
             ],
         ],
         [
-            'text' => 'Pengajuan',
-            'url'  => 'pengajuan',
-            'icon' => 'fas fa-file-invoice'
+            'text' => 'Pengajuan Asset',
+            'icon' => 'fas fa-file-invoice',
+            'submenu' => [
+                [
+                    'text' => 'Daftar Pengajuan',
+                    'url'  => 'pengajuan',
+                    'icon' => 'fas fa-list',
+                ],
+                [
+                    'text' => 'Buat Pengajuan',
+                    'url'  => 'pengajuan/create',
+                    'icon' => 'fas fa-plus',
+                ],
+                [
+                    'text' => 'Approval Pengajuan',
+                    'url'  => 'pengajuan/approvals',
+                    'icon' => 'fas fa-check-circle',
+                ],
+            ],
         ],
         [
             'text' => 'History',

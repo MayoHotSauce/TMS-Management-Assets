@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\PengajuanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,12 +81,16 @@ Route::get('/test-barang', function() {
 
 // PENGAJUAN ASSET
 Route::middleware(['auth'])->group(function () {
-    Route::get('/pengajuan', [AssetRequestController::class, 'index'])->name('pengajuan.index');
-    Route::get('/pengajuan/create', [AssetRequestController::class, 'create'])->name('pengajuan.create');
-    Route::post('/pengajuan', [AssetRequestController::class, 'store'])->name('pengajuan.store');
-    Route::get('/pengajuan/{id}', [AssetRequestController::class, 'show'])->name('pengajuan.show');
-    Route::get('/pengajuan/{id}/approve/{token}', [AssetRequestController::class, 'approve'])->name('pengajuan.approve');
-    Route::get('/pengajuan/{id}/decline/{token}', [AssetRequestController::class, 'decline'])->name('pengajuan.decline');
+    Route::get('pengajuan/approvals', [PengajuanController::class, 'approvals'])->name('pengajuan.approvals');
+    
+    Route::get('pengajuan', [PengajuanController::class, 'index'])->name('pengajuan.index');
+    Route::get('pengajuan/create', [PengajuanController::class, 'create'])->name('pengajuan.create');
+    Route::post('pengajuan', [PengajuanController::class, 'store'])->name('pengajuan.store');
+    Route::post('pengajuan/{pengajuan}/approve', [PengajuanController::class, 'approve'])->name('pengajuan.approve');
+    Route::post('pengajuan/{pengajuan}/reject', [PengajuanController::class, 'reject'])->name('pengajuan.reject');
+    Route::get('pengajuan/{pengajuan}', [PengajuanController::class, 'show'])->name('pengajuan.show');
+    Route::patch('pengajuan/{pengajuan}/archive', [PengajuanController::class, 'archive'])
+        ->name('pengajuan.archive');
 });
 
 Route::get('/test-email', function() {
@@ -171,3 +176,18 @@ Route::get('/maintenance/{id}/approval-detail', [MaintenanceController::class, '
 
 Route::put('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
 Route::put('/maintenance/{id}/reject', [MaintenanceController::class, 'reject'])->name('maintenance.reject');
+
+Route::middleware(['auth'])->group(function () {
+    // Pengajuan routes with explicit names
+    Route::prefix('pengajuan')->name('pengajuan.')->group(function () {
+        Route::get('/approvals', [PengajuanController::class, 'approvals'])->name('approvals');
+        
+        Route::get('/', [PengajuanController::class, 'index'])->name('index');
+        Route::get('/create', [PengajuanController::class, 'create'])->name('create');
+        Route::post('/', [PengajuanController::class, 'store'])->name('store');
+        Route::post('/{pengajuan}/approve', [PengajuanController::class, 'approve'])->name('approve');
+        Route::post('/{pengajuan}/reject', [PengajuanController::class, 'reject'])->name('reject');
+        
+        Route::get('/{pengajuan}', [PengajuanController::class, 'show'])->name('show');
+    });
+});

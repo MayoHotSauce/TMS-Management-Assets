@@ -6,24 +6,31 @@ use App\Models\MaintenanceLog;
 use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\ActivityLogger;
 
 class MaintenanceController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->get('status', 'active'); // Set 'active' as default
+        $status = $request->get('status', 'active');
         
-        $query = MaintenanceLog::with(['asset'])
-            ->when($status !== 'all', function($q) use ($status) {
-                if ($status === 'active') {
-                    $q->whereIn('status', ['scheduled', 'in_progress', 'pending_final_approval']);
-                } else {
-                    $q->where('status', $status);
-                }
-            })
-            ->orderBy('created_at', 'desc');
-
-        $maintenances = $query->paginate(10);
+        $query = MaintenanceLog::with('asset');
+        
+        switch ($status) {
+            case 'completed':
+                $query->where('status', 'completed');
+                break;
+            case 'archived':
+                $query->where('status', 'archived');
+                break;
+            case 'active':
+            default:
+                $query->whereIn('status', ['pending', 'in_progress']);
+                break;
+        }
+        
+        $maintenances = $query->orderBy('created_at', 'desc')
+                             ->paginate(10);
         
         return view('maintenance.index', compact('maintenances', 'status'));
     }
@@ -286,32 +293,18 @@ class MaintenanceController extends Controller
         return $statusMap[$equipmentStatus] ?? 'dalam_perbaikan';
     }
 
-    public function archive($id)
+    public function archive(MaintenanceLog $maintenance)
     {
-        try {
-            DB::beginTransaction();
-            
-            $maintenance = MaintenanceLog::findOrFail($id);
-            
-            $maintenance->update([
-                'status' => 'archived',
-                'archived_at' => now()
-            ]);
-            
-            DB::commit();
-            
-            return redirect()->route('maintenance.index')
-                ->with('success', 'Data maintenance berhasil diarsipkan');
-                
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error in archiving maintenance:', [
-                'error' => $e->getMessage(),
-                'maintenance_id' => $id
-            ]);
-            
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mengarsipkan data');
-        }
+        $maintenance->status = 'archived';
+        $maintenance->save();
+
+        ActivityLogger::log(
+            'archive',
+            'maintenance',
+            'Archived maintenance record: ' . $maintenance->asset->name
+        );
+
+        return redirect()->back()
+            ->with('success', 'Maintenance berhasil diarsipkan.');
     }
 }

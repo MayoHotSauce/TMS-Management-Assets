@@ -8,13 +8,6 @@
                 <div class="col-sm-6">
                     <h1>Buat Pengajuan Asset Baru</h1>
                 </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('pengajuan.index') }}">Pengajuan</a></li>
-                        <li class="breadcrumb-item active">Buat</li>
-                    </ol>
-                </div>
             </div>
         </div>
     </section>
@@ -38,48 +31,56 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="category">Kategori</label>
-                            <select class="form-control @error('category') is-invalid @enderror" 
-                                    id="category" name="category" required>
-                                <option value="">Pilih Kategori</option>
-                                @foreach($categories as $key => $value)
-                                    <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>
-                                        {{ $value }}
+                            <label for="room_id">Ruangan</label>
+                            <select class="form-control @error('room_id') is-invalid @enderror" 
+                                    id="room_id" name="room_id" required>
+                                <option value="">Pilih Ruangan</option>
+                                @foreach($rooms as $room)
+                                    <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
+                                        {{ $room->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('category')
+                            @error('room_id')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category_id">Kategori</label>
+                            <select class="form-control @error('category_id') is-invalid @enderror" 
+                                    id="category_id" name="category_id" required>
+                                <option value="">Pilih Kategori</option>
+                                @foreach($categories as $id => $name)
+                                    <option value="{{ $id }}" {{ old('category_id') == $id ? 'selected' : '' }}>
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('category_id')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
 
                         <div class="form-group">
                             <label for="price">Harga</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">Rp</span>
-                                </div>
-                                <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                       id="price" name="price" value="{{ old('price') }}" required>
-                            </div>
+                            <input type="number" class="form-control @error('price') is-invalid @enderror" 
+                                   id="price" name="price" value="{{ old('price') }}" required>
                             @error('price')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
 
                         <div class="form-group">
-                            <label for="approver_email">Email Approver</label>
-                            <input type="email" class="form-control @error('approver_email') is-invalid @enderror" 
-                                   id="approver_email" name="approver_email" value="{{ old('approver_email') }}" required>
-                            @error('approver_email')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="description">Deskripsi</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                            <label for="description">
+                                Deskripsi <small class="text-muted">(Optional)</small>
+                            </label>
+                            <textarea 
+                                class="form-control @error('description') is-invalid @enderror"
+                                id="description" 
+                                name="description"
+                                rows="3"
+                                placeholder="Masukkan deskripsi (opsional)">{{ old('description') }}</textarea>
                             @error('description')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -98,15 +99,6 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Prevent multiple form submissions
-    $('form').submit(function() {
-        // Disable the submit button
-        $(this).find(':submit').prop('disabled', true);
-        
-        // Optional: Add loading state
-        $(this).find(':submit').html('<i class="fas fa-spinner fa-spin"></i> Processing...');
-    });
-
     // Format price input with thousand separator
     $('#price').on('input', function() {
         let value = $(this).val().replace(/[^\d]/g, '');
@@ -119,8 +111,7 @@ $(document).ready(function() {
         if (price <= 0) {
             e.preventDefault();
             alert('Harga harus lebih besar dari 0');
-            // Re-enable the submit button if validation fails
-            $(this).find(':submit').prop('disabled', false);
+            return false;
         }
     });
 });

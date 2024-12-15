@@ -31,26 +31,26 @@
                             <table class="table table-bordered">
                                 <tr>
                                     <th style="width: 200px">ID Pengajuan</th>
-                                    <td>{{ $assetRequest->id }}</td>
+                                    <td>{{ $pengajuan->id }}</td>
                                 </tr>
                                 <tr>
                                     <th>Nama Asset</th>
-                                    <td>{{ $assetRequest->name }}</td>
+                                    <td>{{ $pengajuan->name }}</td>
                                 </tr>
                                 <tr>
                                     <th>Kategori</th>
-                                    <td>{{ $assetRequest->category }}</td>
+                                    <td>{{ $pengajuan->category }}</td>
                                 </tr>
                                 <tr>
                                     <th>Harga</th>
-                                    <td>Rp {{ number_format($assetRequest->price, 0, ',', '.') }}</td>
+                                    <td>Rp {{ number_format($pengajuan->price, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
                                     <th>Status</th>
                                     <td>
-                                        @if($assetRequest->status == 'pending')
+                                        @if($pengajuan->status == 'pending')
                                             <span class="badge badge-warning">Menunggu</span>
-                                        @elseif($assetRequest->status == 'approved')
+                                        @elseif($pengajuan->status == 'approved')
                                             <span class="badge badge-success">Disetujui</span>
                                         @else
                                             <span class="badge badge-danger">Ditolak</span>
@@ -59,16 +59,24 @@
                                 </tr>
                                 <tr>
                                     <th>Tanggal Pengajuan</th>
-                                    <td>{{ $assetRequest->created_at->format('d M Y H:i') }}</td>
+                                    <td>
+                                        @if($pengajuan->created_at)
+                                            {{ $pengajuan->created_at->format('d M Y H:i') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <th>Email Pemohon</th>
-                                    <td>{{ $assetRequest->requester_email }}</td>
+                                    <th>Pemohon</th>
+                                    <td>{{ $pengajuan->requester_email }}</td>
                                 </tr>
+                                @if($pengajuan->notes)
                                 <tr>
-                                    <th>Email Approver</th>
-                                    <td>{{ $assetRequest->approver_email }}</td>
+                                    <th>Catatan</th>
+                                    <td>{{ $pengajuan->notes }}</td>
                                 </tr>
+                                @endif
                             </table>
                         </div>
                         <div class="col-md-6">
@@ -77,7 +85,7 @@
                                     <h4 class="card-title">Deskripsi</h4>
                                 </div>
                                 <div class="card-body">
-                                    {{ $assetRequest->description ?? 'Tidak ada deskripsi' }}
+                                    {{ $pengajuan->description ?? 'Tidak ada deskripsi' }}
                                 </div>
                             </div>
                         </div>
@@ -86,15 +94,15 @@
                 <div class="card-footer">
                     <a href="{{ route('pengajuan.index') }}" class="btn btn-default">Kembali</a>
                     
-                    @if($assetRequest->status == 'pending' && auth()->user()->email == $assetRequest->approver_email)
+                    @if($pengajuan->status == 'pending' && auth()->user()->email == $pengajuan->approver_email)
                     <div class="float-right">
-                        <form action="{{ route('pengajuan.update', $assetRequest->id) }}" method="POST" style="display: inline;">
+                        <form action="{{ route('pengajuan.update', $pengajuan->id) }}" method="POST" style="display: inline;">
                             @csrf
                             @method('PUT')
                             <input type="hidden" name="status" value="approved">
                             <button type="submit" class="btn btn-success">Setujui</button>
                         </form>
-                        <form action="{{ route('pengajuan.update', $assetRequest->id) }}" method="POST" style="display: inline;">
+                        <form action="{{ route('pengajuan.update', $pengajuan->id) }}" method="POST" style="display: inline;">
                             @csrf
                             @method('PUT')
                             <input type="hidden" name="status" value="declined">

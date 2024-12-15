@@ -28,4 +28,9 @@ class Asset extends Model
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function maintenances()
+    {
+        return $this->hasMany(Maintenance::class, 'barang_id');
+    }
 }

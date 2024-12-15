@@ -1,149 +1,139 @@
 @extends('adminlte::page')
 
-@section('title', 'Daftar Perbaikan')
+@section('title', 'Daftar Maintenance')
 
 @section('content_header')
-    <h1>Maintenance Logs List</h1>
-@stop
-
-@section('content')
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-
-    <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h3 class="card-title">Maintenance Logs List</h3>
-                <div class="d-flex align-items-center gap-3">
-                    <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Maintenance
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <!-- Filter Section -->
-            <div class="mb-3">
-                <select id="statusFilter" class="form-control ml-2" onchange="this.form.submit()">
-                    <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>Semua</option>
-                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
-                    <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Diarsipkan</option>
-                </select>
-            </div>
-
-            <table class="table table-bordered" id="maintenance-table">
-                <thead>
-                    <tr>
-                        <th>Asset Name</th>
-                        <th>Description</th>
-                        <th>Date</th>
-                        <th>Cost</th>
-                        <th>Performed By</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($maintenances as $maintenance)
-                        <tr>
-                            <td>{{ $maintenance->asset->name ?? 'N/A' }}</td>
-                            <td>{{ $maintenance->description }}</td>
-                            <td>{{ $maintenance->maintenance_date }}</td>
-                            <td>{{ number_format($maintenance->cost, 2) }}</td>
-                            <td>{{ $maintenance->performed_by }}</td>
-                            <td>
-                                @if($maintenance->status == 'scheduled')
-                                    <span class="badge badge-warning">Menunggu Persetujuan</span>
-                                @elseif($maintenance->status == 'in_progress')
-                                    <span class="badge badge-info">Dalam Proses</span>
-                                @elseif($maintenance->status == 'completed')
-                                    <span class="badge badge-success">Selesai</span>
-                                @else
-                                    <span class="badge badge-secondary">{{ $maintenance->status }}</span>
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('maintenance.show', $maintenance->id) }}" class="btn btn-sm btn-info">Detail</a>
-                                <a href="{{ route('maintenance.edit', $maintenance->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                @if($maintenance->status == 'in_progress')
-                                    <a href="{{ route('maintenance.completion.form', $maintenance->id) }}" class="btn btn-sm btn-success">
-                                        Selesai
-                                    </a>
-                                @endif
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="confirmArchive(this)">
-                                    Arsip
-                                </button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <span>
-                    Showing {{ $maintenances->firstItem() ?? 0 }}-{{ $maintenances->lastItem() ?? 0 }} of {{ $maintenances->total() }}
-                </span>
-                {{ $maintenances->links() }}
-            </div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Daftar Maintenance</h1>
+        <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Buat Maintenance
+        </a>
     </div>
 @stop
 
-@section('css')
-<link rel="stylesheet" href="/css/admin_custom.css">
+@section('content')
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="d-flex border-bottom">
+                <a href="{{ route('maintenance.index', ['status' => 'active']) }}" 
+                   class="px-4 py-2 {{ $status === 'active' ? 'text-primary border-primary border-bottom' : 'text-secondary' }}">
+                    Active
+                </a>
+                <a href="{{ route('maintenance.index', ['status' => 'completed']) }}" 
+                   class="px-4 py-2 {{ $status === 'completed' ? 'text-primary border-primary border-bottom' : 'text-secondary' }}">
+                    Completed
+                </a>
+                <a href="{{ route('maintenance.index', ['status' => 'archived']) }}" 
+                   class="px-4 py-2 {{ $status === 'archived' ? 'text-primary border-primary border-bottom' : 'text-secondary' }}">
+                    Archived
+                </a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover text-nowrap mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Asset</th>
+                            <th>Tipe</th>
+                            <th>Status</th>
+                            <th>Teknisi</th>
+                            <th>Tanggal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($maintenances as $maintenance)
+                            <tr>
+                                <td>{{ $maintenance->id }}</td>
+                                <td>
+                                    @if($maintenance->asset)
+                                        {{ $maintenance->asset->name ?? $maintenance->barang_id }}
+                                    @else
+                                        Asset ID: {{ $maintenance->barang_id }} (Not Found)
+                                    @endif
+                                </td>
+                                <td>{{ $maintenance->type }}</td>
+                                <td>
+                                    @switch($maintenance->status)
+                                        @case('pending')
+                                            <span class="badge badge-warning">Pending</span>
+                                            @break
+                                        @case('in_progress')
+                                            <span class="badge badge-info">In Progress</span>
+                                            @break
+                                        @case('completed')
+                                            <span class="badge badge-success">Completed</span>
+                                            @break
+                                        @case('archived')
+                                            <span class="badge badge-secondary">Archived</span>
+                                            @break
+                                    @endswitch
+                                </td>
+                                <td>{{ $maintenance->technician_name }}</td>
+                                <td>{{ $maintenance->created_at->format('d/m/Y H:i') }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a href="{{ route('maintenance.show', $maintenance->id) }}" 
+                                           class="btn btn-info btn-sm" 
+                                           title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if($maintenance->status !== 'archived')
+                                            <form action="{{ route('maintenance.archive', $maintenance->id) }}" 
+                                                  method="POST" 
+                                                  style="margin-left: 8px;">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" 
+                                                        class="btn btn-secondary btn-sm archive-btn" 
+                                                        title="Arsipkan">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center">Tidak ada data maintenance</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if($maintenances->hasPages())
+            <div class="card-footer clearfix">
+                {{ $maintenances->appends(['status' => $status])->links() }}
+            </div>
+        @endif
+    </div>
 @stop
 
 @section('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <script>
-    $(document).ready(function() {
-        $('#statusFilter').on('change', function() {
-            window.location.href = "{{ route('maintenance.index') }}?status=" + $(this).val();
+        $(document).ready(function() {
+            $('.archive-btn').click(function(e) {
+                e.preventDefault();
+                const form = $(this).closest('form');
+                
+                Swal.fire({
+                    title: 'Konfirmasi Arsip',
+                    text: "Apakah anda yakin ingin mengarsipkan maintenance ini?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Arsipkan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
         });
-    });
-
-    function confirmArchive(button) {
-        console.log('Archive button clicked');
-        Swal.fire({
-            title: 'Konfirmasi Arsip',
-            text: "Apakah anda yakin ingin mengarsipkan data ini?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Ya, Arsipkan!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                console.log('Submitting form...');
-                button.closest('form').submit();
-            }
-        });
-    }
-
-    // Add SweetAlert for success/error messages
-    @if(session('success'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: "{{ session('success') }}"
-        });
-    @endif
-
-    @if(session('error'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: "{{ session('error') }}"
-        });
-    @endif
     </script>
 @stop
