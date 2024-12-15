@@ -41,4 +41,10 @@ class Asset extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function maintenanceLogs()
+    {
+        return $this->hasMany(MaintenanceLog::class, 'barang_id', 'id')
+                    ->where('status', 'completed');
+    }
 } 

@@ -147,3 +147,27 @@ Route::put('/maintenance/{id}/submit-completion', [MaintenanceController::class,
 Route::put('/maintenance/{id}/start', [MaintenanceController::class, 'startWork'])->name('maintenance.start');
 
 Route::get('/maintenance/{id}/approval-detail', [MaintenanceController::class, 'showApprovalDetail'])->name('maintenance.approval-detail');
+
+Route::prefix('maintenance')->name('maintenance.')->group(function () {
+    // Other maintenance routes...
+    
+    Route::get('/approvals', [MaintenanceController::class, 'approvalList'])->name('approvals');
+    Route::get('/approval-detail/{id}', [MaintenanceController::class, 'showApprovalDetail'])->name('approval-detail');
+    Route::post('/approvals/approve/{id}', [MaintenanceController::class, 'approve'])->name('approvals.approve');
+    Route::get('/{id}', [MaintenanceController::class, 'show'])->name('show');
+    Route::get('/{id}/edit', [MaintenanceController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [MaintenanceController::class, 'update'])->name('update');
+    Route::delete('/{id}', [MaintenanceController::class, 'destroy'])->name('destroy');
+    Route::put('/{id}/archive', [MaintenanceController::class, 'archive'])->name('archive');
+});
+
+Route::post('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])
+    ->name('maintenance.approve');
+
+Route::get('/maintenance/{id}/completion', [MaintenanceController::class, 'showCompletionForm'])->name('maintenance.completion.form');
+Route::put('/maintenance/{id}/complete', [MaintenanceController::class, 'complete'])->name('maintenance.complete');
+
+Route::get('/maintenance/{id}/approval-detail', [MaintenanceController::class, 'showApprovalDetail'])->name('maintenance.approval-detail');
+
+Route::put('/maintenance/{id}/approve', [MaintenanceController::class, 'approve'])->name('maintenance.approve');
+Route::put('/maintenance/{id}/reject', [MaintenanceController::class, 'reject'])->name('maintenance.reject');

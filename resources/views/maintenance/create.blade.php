@@ -25,7 +25,7 @@
             </div>
         @endif
 
-        <form id="maintenanceForm" action="{{ route('maintenance.store') }}" method="POST">
+        <form action="{{ route('maintenance.store') }}" method="POST">
             @csrf
             
             <div class="row">
@@ -95,60 +95,10 @@
             </div>
 
             <div class="mt-4">
-                <button type="submit" class="btn btn-primary" id="submitBtn">Create Maintenance Log</button>
+                <button type="submit" class="btn btn-primary">Create Maintenance Log</button>
                 <a href="{{ route('maintenance.index') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 @stop
-
-@push('js')
-<script>
-$(document).ready(function() {
-    $('#maintenanceForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const submitBtn = $('#submitBtn');
-        
-        // Disable submit button to prevent double submission
-        submitBtn.prop('disabled', true);
-        
-        $.ajax({
-            url: form.attr('action'),
-            type: 'POST',
-            data: form.serialize(),
-            success: function(response) {
-                if (response.success) {
-                    window.location.href = '{{ route("maintenance.index") }}';
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: response.message || 'Terjadi kesalahan saat membuat maintenance log'
-                    });
-                    submitBtn.prop('disabled', false);
-                }
-            },
-            error: function(xhr) {
-                console.error('Error:', xhr);
-                let errorMessage = 'Terjadi kesalahan saat membuat maintenance log';
-                
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: errorMessage
-                });
-                
-                submitBtn.prop('disabled', false);
-            }
-        });
-    });
-});
-</script>
-@endpush

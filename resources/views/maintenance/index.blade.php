@@ -1,6 +1,10 @@
 @extends('adminlte::page')
 
-@section('title', 'Maintenance Logs')
+@section('title', 'Daftar Perbaikan')
+
+@section('content_header')
+    <h1>Maintenance Logs List</h1>
+@stop
 
 @section('content')
     @if(session('success'))
@@ -20,15 +24,20 @@
                     <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add New Maintenance
                     </a>
-                    <select id="statusFilter" class="form-control ml-2">
-                        <option value="active" {{ $currentStatus == 'active' ? 'selected' : '' }}>Active Maintenance</option>
-                        <option value="completed" {{ $currentStatus == 'completed' ? 'selected' : '' }}>Completed Maintenance</option>
-                        <option value="all" {{ $currentStatus == 'all' ? 'selected' : '' }}>All Maintenance</option>
-                    </select>
                 </div>
             </div>
         </div>
         <div class="card-body">
+            <!-- Filter Section -->
+            <div class="mb-3">
+                <select id="statusFilter" class="form-control ml-2" onchange="this.form.submit()">
+                    <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>Semua</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
+                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                    <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Diarsipkan</option>
+                </select>
+            </div>
+
             <table class="table table-bordered" id="maintenance-table">
                 <thead>
                     <tr>
@@ -42,41 +51,35 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($maintenanceLogs as $log)
+                    @foreach($maintenances as $maintenance)
                         <tr>
-                            <td>{{ $log->asset->name ?? 'N/A' }}</td>
-                            <td>{{ $log->description }}</td>
-                            <td>{{ $log->maintenance_date }}</td>
-                            <td>{{ number_format($log->cost, 2) }}</td>
-                            <td>{{ $log->performed_by }}</td>
+                            <td>{{ $maintenance->asset->name ?? 'N/A' }}</td>
+                            <td>{{ $maintenance->description }}</td>
+                            <td>{{ $maintenance->maintenance_date }}</td>
+                            <td>{{ number_format($maintenance->cost, 2) }}</td>
+                            <td>{{ $maintenance->performed_by }}</td>
                             <td>
-                                @if($log->status == 'scheduled')
+                                @if($maintenance->status == 'scheduled')
                                     <span class="badge badge-warning">Menunggu Persetujuan</span>
-                                @elseif($log->status == 'in_progress')
-                                    <span class="badge badge-info">In Progress</span>
-                                @elseif($log->status == 'pending_final_approval')
-                                    <span class="badge badge-secondary">Menunggu Persetujuan Akhir</span>
+                                @elseif($maintenance->status == 'in_progress')
+                                    <span class="badge badge-info">Dalam Proses</span>
+                                @elseif($maintenance->status == 'completed')
+                                    <span class="badge badge-success">Selesai</span>
+                                @else
+                                    <span class="badge badge-secondary">{{ $maintenance->status }}</span>
                                 @endif
                             </td>
                             <td>
-                                @if($log->status == 'scheduled')
-                                    <button class="btn btn-primary btn-sm start-work" data-id="{{ $log->id }}">
-                                        Kerjakan
-                                    </button>
-                                    <button class="btn btn-success btn-sm complete-work" data-id="{{ $log->id }}">
+                                <a href="{{ route('maintenance.show', $maintenance->id) }}" class="btn btn-sm btn-info">Detail</a>
+                                <a href="{{ route('maintenance.edit', $maintenance->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                @if($maintenance->status == 'in_progress')
+                                    <a href="{{ route('maintenance.completion.form', $maintenance->id) }}" class="btn btn-sm btn-success">
                                         Selesai
-                                    </button>
-                                @elseif($log->status == 'in_progress')
-                                    <button class="btn btn-success btn-sm complete-work" data-id="{{ $log->id }}">
-                                        Selesai
-                                    </button>
+                                    </a>
                                 @endif
-                                
-                                @if($log->status != 'archived')
-                                    <button class="btn btn-secondary btn-sm archive-maintenance" data-id="{{ $log->id }}">
-                                        Arsipkan
-                                    </button>
-                                @endif
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="confirmArchive(this)">
+                                    Arsip
+                                </button>
                             </td>
                         </tr>
                     @endforeach
@@ -85,56 +88,62 @@
             
             <div class="d-flex justify-content-between align-items-center mt-3">
                 <span>
-                    Showing {{ $maintenanceLogs->firstItem() ?? 0 }}-{{ $maintenanceLogs->lastItem() ?? 0 }} of {{ $maintenanceLogs->total() }}
+                    Showing {{ $maintenances->firstItem() ?? 0 }}-{{ $maintenances->lastItem() ?? 0 }} of {{ $maintenances->total() }}
                 </span>
-                {{ $maintenanceLogs->links() }}
+                {{ $maintenances->links() }}
             </div>
         </div>
     </div>
 @stop
 
 @section('css')
-<style>
-    .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.75em;
-    }
-    .gap-3 > * {
-        margin-left: 0.5rem;
-    }
-</style>
+<link rel="stylesheet" href="/css/admin_custom.css">
 @stop
 
 @section('js')
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
     $(document).ready(function() {
-        $('#statusFilter').change(function() {
-            let status = $(this).val();
-            window.location.href = `{{ route('maintenance.index') }}?status=${status}`;
-        });
-
-        // Start Work Button
-        $('.start-work').on('click', function() {
-            const id = $(this).data('id');
-            if (confirm('Kerjakan Perbaikan ini?')) {
-                $.ajax({
-                    url: `/maintenance/${id}/start`, // Adjust the URL as needed
-                    type: 'PUT',
-                    success: function(response) {
-                        location.reload(); // Reload the page to see the updated status
-                    },
-                    error: function(xhr) {
-                        alert('Error updating status');
-                    }
-                });
-            }
-        });
-
-        // Complete Work Button
-        $('.complete-work').on('click', function() {
-            const id = $(this).data('id');
-            window.location.href = `/maintenance/${id}/completion-form`;
+        $('#statusFilter').on('change', function() {
+            window.location.href = "{{ route('maintenance.index') }}?status=" + $(this).val();
         });
     });
-</script>
+
+    function confirmArchive(button) {
+        console.log('Archive button clicked');
+        Swal.fire({
+            title: 'Konfirmasi Arsip',
+            text: "Apakah anda yakin ingin mengarsipkan data ini?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Arsipkan!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log('Submitting form...');
+                button.closest('form').submit();
+            }
+        });
+    }
+
+    // Add SweetAlert for success/error messages
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: "{{ session('success') }}"
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: "{{ session('error') }}"
+        });
+    @endif
+    </script>
 @stop

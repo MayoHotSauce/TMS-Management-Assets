@@ -3,20 +3,6 @@
 @section('title', 'Asset Management')
 
 @section('content')
-    {{-- Hapus atau comment bagian debug ini
-    @if(config('app.debug'))
-        <div class="alert alert-info">
-            <p>Debug Info:</p>
-            <ul>
-                <li>Total Items: {{ $barang->total() }}</li>
-                <li>Current Page: {{ $barang->currentPage() }}</li>
-                <li>Items Per Page: {{ $barang->perPage() }}</li>
-                <li>Total Pages: {{ $barang->lastPage() }}</li>
-            </ul>
-        </div>
-    @endif
-    --}}
-
     <h1>Asset Management</h1>
 
     <div class="card">
@@ -43,6 +29,7 @@
                         <th>Status</th>
                         <th>Tanggal Pembelian</th>
                         <th>Biaya</th>
+                        <th>Riwayat</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -72,6 +59,14 @@
                         </td>
                         <td>{{ $item->purchase_date }}</td>
                         <td>Rp {{ number_format($item->purchase_cost, 2) }}</td>
+                        <td>
+                            @php
+                                $maintenanceCount = $item->maintenance_count ?? 0;
+                            @endphp
+                            <span class="badge badge-{{ $maintenanceCount > 0 ? 'info' : 'secondary' }}">
+                                {{ $maintenanceCount }} kali
+                            </span>
+                        </td>
                         <td>
                             <button type="button" class="btn btn-sm btn-success print-label" 
                                     onclick="showPrintDialog('{{ $item->name }}', '{{ $item->asset_tag }}', '{{ optional($item->room)->name }}', '{{ $item->purchase_date }}')">

@@ -75,18 +75,26 @@ class DataBarangController extends Controller
         $validated['status'] = 'siap_dipakai';
         $validated['asset_tag'] = $this->generateId($request->room_id);
         
-        $barang = Asset::create($validated);
+        DB::beginTransaction();
+        try {
+            $barang = Asset::create($validated);
 
-        ActivityLogger::log(
-            'create',
-            'barang',
-            'Added new barang: ' . $barang->name,
-            null,
-            $barang->toArray()
-        );
+            ActivityLogger::log(
+                'create',
+                'barang',
+                'Added new barang: ' . $barang->name,
+                null,
+                $barang->toArray()
+            );
 
-        return redirect()->route('barang.index')
-                        ->with('success', 'Barang added successfully');
+            DB::commit();
+            return redirect()->route('barang.index')
+                            ->with('success', 'Barang added successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                            ->with('error', 'Error creating asset: ' . $e->getMessage());
+        }
     }
 
     public function edit($id)

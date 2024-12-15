@@ -40,9 +40,14 @@
                                         <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#initialModal{{ $maintenance->id }}">
                                             Detail
                                         </button>
-                                        <form action="{{ route('maintenance.approve', $maintenance->id) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('maintenance.approvals.approve', $maintenance->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success">Setujui</button>
+                                        </form>
+                                        <form action="{{ route('maintenance.reject', $maintenance->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-sm btn-danger">Tolak</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -81,33 +86,14 @@
                         <tbody>
                             @foreach($finalApprovals as $maintenance)
                                 <tr>
-                                    <td>{{ $maintenance->asset->name }}</td>
-                                    <td>{{ $maintenance->technician_name }}</td>
-                                    <td>{{ $maintenance->completion_date }}</td>
+                                    <td>{{ $maintenance->asset->name ?? 'N/A' }}</td>
+                                    <td>{{ $maintenance->technician_name ?? 'N/A' }}</td>
+                                    <td>{{ $maintenance->completion_date ?? 'N/A' }}</td>
+                                    <td>{{ $maintenance->equipment_status ?? '-' }}</td>
+                                    <td>{{ $maintenance->follow_up_priority ?? '-' }}</td>
                                     <td>
-                                        @switch($maintenance->equipment_status)
-                                            @case('fully_repaired')
-                                                <span class="badge badge-success">Sepenuhnya Diperbaiki</span>
-                                                @break
-                                            @case('partially_repaired')
-                                                <span class="badge badge-warning">Sebagian Diperbaiki</span>
-                                                @break
-                                            @default
-                                                <span class="badge badge-secondary">{{ $maintenance->equipment_status }}</span>
-                                        @endswitch
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-{{ $maintenance->follow_up_priority === 'high' ? 'danger' : ($maintenance->follow_up_priority === 'medium' ? 'warning' : 'info') }}">
-                                            {{ ucfirst($maintenance->follow_up_priority) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#finalModal{{ $maintenance->id }}">
-                                            Detail
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-success approve-maintenance" data-id="{{ $maintenance->id }}">
-                                            Setujui
-                                        </button>
+                                        <a href="{{ route('maintenance.approval-detail', $maintenance->id) }}" class="btn btn-sm btn-info">Detail</a>
+                                        <button type="button" class="btn btn-sm btn-success" onclick="confirmApprove({{ $maintenance->id }})">Setujui</button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -249,68 +235,54 @@
     @push('js')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-        $(document).ready(function() {
-            // Handle approve button click
-            $('.approve-maintenance').on('click', function() {
-                const button = $(this);
-                const maintenanceId = button.data('id');
-                const modal = button.closest('.modal');
-
-                Swal.fire({
-                    title: 'Konfirmasi',
-                    text: 'Apakah anda yakin ingin menyetujui perbaikan ini?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Setujui!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '/maintenance/' + maintenanceId + '/approve',
-                            type: 'POST',
-                            data: {
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire({
-                                        title: 'Berhasil!',
-                                        text: response.message,
-                                        icon: 'success',
-                                        timer: 1500,
-                                        showConfirmButton: false
-                                    }).then(() => {
-                                        // Close the modal if it exists
-                                        if (modal) {
-                                            modal.modal('hide');
-                                        }
-                                        // Force reload the page
-                                        window.location.href = '{{ route("maintenance.index") }}';
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        title: 'Error!',
-                                        text: response.message,
-                                        icon: 'error',
-                                        confirmButtonText: 'OK'
-                                    });
-                                }
-                            },
-                            error: function(xhr) {
-                                Swal.fire({
-                                    title: 'Error!',
-                                    text: 'Terjadi kesalahan saat memproses persetujuan',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        });
-                    }
-                });
+        function confirmApprove(id) {
+            Swal.fire({
+                title: 'Konfirmasi Persetujuan',
+                text: "Apakah anda yakin ingin menyetujui perbaikan ini?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Setujui!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create and submit form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ url("/maintenance") }}/' + id + '/approve';
+                    
+                    // Add CSRF token
+                    const csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfToken);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
             });
-        });
+        }
+
+        // Check for flash message from controller
+        @if(session('error'))
+            Swal.fire({
+                title: 'Error!',
+                text: '{{ session('error') }}',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        @endif
+
+        @if(session('success'))
+            Swal.fire({
+                title: 'Berhasil!',
+                text: '{{ session('success') }}',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        @endif
         </script>
     @endpush
 @endsection 

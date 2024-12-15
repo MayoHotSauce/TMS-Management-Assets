@@ -9,8 +9,32 @@ class AssetController extends Controller
 {
     public function index()
     {
-        $assets = Asset::with(['category', 'location'])->paginate(10);
-        return view('assets.index', compact('assets'));
+        \DB::enableQueryLog();
+
+        // First get the maintenance counts
+        $maintenanceCounts = \DB::table('maintenance_logs')
+            ->select('barang_id', \DB::raw('COUNT(*) as count'))
+            ->where('status', 'completed')
+            ->groupBy('barang_id')
+            ->get();
+
+        // Debug data to pass to view
+        $debugData = [
+            'maintenance_counts' => $maintenanceCounts,
+            'raw_query' => \DB::getQueryLog(),
+        ];
+
+        // Then get the assets with their basic info
+        $barang = Asset::with(['room', 'category'])
+            ->paginate(10);
+
+        // Add the maintenance counts to each asset
+        $barang->each(function($item) use ($maintenanceCounts) {
+            $count = $maintenanceCounts->where('barang_id', $item->id)->first();
+            $item->maintenance_count = $count ? $count->count : 0;
+        });
+
+        return view('barang.index', compact('barang', 'debugData'));
     }
 
     public function create()
