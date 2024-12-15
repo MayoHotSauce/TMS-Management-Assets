@@ -53,11 +53,8 @@ class DataBarangController extends Controller
         $sequence->next_val = $nextId + 1;
         $sequence->save();
         
-        // Get room code from room_id
-        $room = Room::find($roomId);
-        $roomCode = strtoupper(substr($room->name, 0, 2));
-        
-        return "TMS-" . $roomCode . "-" . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+        // Generate simpler asset tag without room code
+        return "TMS-" . str_pad($nextId, 5, '0', STR_PAD_LEFT);
     }
 
     public function store(Request $request)
