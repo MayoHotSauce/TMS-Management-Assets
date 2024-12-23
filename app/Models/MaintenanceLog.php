@@ -8,13 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MaintenanceLog extends Model
 {
     protected $fillable = [
-        'asset_id',
-        'type',
+        'barang_id',
+        'maintenance_date',
         'description',
         'status',
-        'technician_name',
-        'completion_notes',
-        'completed_at',
+        'cost',
+        'performed_by',
         'user_id'
     ];
 
