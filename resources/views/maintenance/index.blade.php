@@ -15,6 +15,10 @@
     <div class="card">
         <div class="card-body p-0">
             <div class="d-flex border-bottom">
+                 <a href="{{ route('maintenance.index', ['status' => 'scheduled']) }}" 
+                   class="px-4 py-2 {{ $status === 'scheduled' ? 'text-primary border-primary border-bottom' : 'text-secondary' }}">
+                    Pending
+                </a>
                 <a href="{{ route('maintenance.index', ['status' => 'active']) }}" 
                    class="px-4 py-2 {{ $status === 'active' ? 'text-primary border-primary border-bottom' : 'text-secondary' }}">
                     Active
@@ -56,8 +60,8 @@
                                 <td>{{ $maintenance->type }}</td>
                                 <td>
                                     @switch($maintenance->status)
-                                        @case('pending')
-                                            <span class="badge badge-warning">Pending</span>
+                                        @case('scheduled')
+                                            <span class="badge badge-warning">Scheduled</span>
                                             @break
                                         @case('in_progress')
                                             <span class="badge badge-info">In Progress</span>
