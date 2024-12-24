@@ -80,6 +80,13 @@
                 <label>Catatan Tambahan</label>
                 <textarea class="form-control" rows="2" readonly>{{ $maintenance->additional_notes ?: 'Tidak ada' }}</textarea>
             </div>
+
+            @if($maintenance->revision_notes)
+                <div class="alert alert-warning">
+                    <h5><i class="icon fas fa-exclamation-triangle"></i> Catatan Revisi:</h5>
+                    {{ $maintenance->revision_notes }}
+                </div>
+            @endif
         </div>
     </div>
 @endsection 

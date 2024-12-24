@@ -15,27 +15,26 @@ class PengajuanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AssetRequest::query()->with('user');
+        $query = AssetRequest::query()->with(['user', 'room']);
 
-        // Add filter functionality
-        $status = $request->get('status', 'active'); // Default to active
+        $status = $request->get('status', 'pending');
 
         switch ($status) {
+            case 'pending':
+                $query->where('status', 'pending');
+                break;
             case 'active':
-                $query->whereIn('status', ['pending']);
+                $query->where('status', 'approved');
+                break;
+            case 'bukti':
+                $query->where('status', 'bukti');
                 break;
             case 'completed':
-                $query->whereIn('status', ['approved', 'declined']);
+                $query->whereIn('status', ['completed', 'rejected']);
                 break;
-            case 'archived':
-                $query->whereIn('status', ['archived']);
-                break;
-            default:
-                $query->whereIn('status', ['pending']);
         }
 
         $requests = $query->latest()->paginate(10);
-
         return view('pengajuan.index', compact('requests', 'status'));
     }
 
@@ -83,64 +82,34 @@ class PengajuanController extends Controller
 
     public function approvals()
     {
-        try {
-            $requests = AssetRequest::query()
-                ->where('status', '=', 'pending')
-                ->with('user')
-                ->latest()
-                ->paginate(10);
+        $firstApprovals = AssetRequest::where('status', 'pending')
+            ->with(['user', 'room'])
+            ->latest()
+            ->get();
 
-            \Log::info('SQL Query: ' . AssetRequest::where('status', 'pending')->toSql());
-            \Log::info('Request Count: ' . $requests->count());
+        $finalApprovals = AssetRequest::where('status', 'final_approval')
+            ->with(['user', 'room'])
+            ->latest()
+            ->get();
 
-            return view('pengajuan.approvals', compact('requests'));
-        } catch (\Exception $e) {
-            \Log::error('Approval Error: ' . $e->getMessage());
-            return back()->with('error', 'Error loading approvals: ' . $e->getMessage());
-        }
+        return view('pengajuan.approvals', compact('firstApprovals', 'finalApprovals'));
     }
 
     public function approve(AssetRequest $pengajuan)
     {
         try {
-            DB::transaction(function () use ($pengajuan) {
-                // Update request status
-                $pengajuan->status = 'approved';
-                $pengajuan->approved_at = now();
-                $pengajuan->save();
+            $pengajuan->status = 'active';
+            $pengajuan->approved_at = now();
+            $pengajuan->save();
 
-                // Create new asset
-                $asset = new Asset();
-                $asset->name = $pengajuan->name;
-                $asset->category_id = Category::where('name', $pengajuan->category)->first()->id;
-                $asset->room_id = $pengajuan->room_id;
-                $asset->description = $pengajuan->description;
-                $asset->purchase_date = now();
-                $asset->purchase_cost = $pengajuan->price;
-                $asset->status = 'siap_dipakai';
-
-                // Generate unique asset tag
-                $nextId = 1;
-                do {
-                    $assetTag = 'TMS-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
-                    $exists = Asset::where('asset_tag', $assetTag)->exists();
-                    $nextId++;
-                } while ($exists);
-
-                $asset->asset_tag = $assetTag;
-                $asset->save();
-
-                ActivityLogger::log(
-                    'approve',
-                    'asset_request',
-                    'Approved asset request and created asset: ' . $pengajuan->name,
-                    null,
-                    ['asset_id' => $asset->id]
-                );
-            });
+            ActivityLogger::log(
+                'approve',
+                'asset_request',
+                'Menyetujui pengajuan asset: ' . $pengajuan->name
+            );
 
             return redirect()->route('pengajuan.approvals')
-                ->with('success', 'Pengajuan berhasil disetujui dan asset baru telah dibuat.');
+                ->with('success', 'Pengajuan telah disetujui dan menunggu bukti pembelian.');
         } catch (\Exception $e) {
             return redirect()->route('pengajuan.approvals')
                 ->with('error', 'Gagal menyetujui pengajuan: ' . $e->getMessage());
@@ -189,5 +158,117 @@ class PengajuanController extends Controller
 
         return redirect()->back()
             ->with('success', 'Pengajuan berhasil diarsipkan.');
+    }
+
+    public function submitProof(Request $request, AssetRequest $pengajuan)
+    {
+        $validated = $request->validate([
+            'proof_image' => 'required|image|max:2048',
+            'proof_description' => 'required|string',
+            'total_cost' => 'required|numeric'
+        ]);
+
+        try {
+            DB::transaction(function () use ($pengajuan, $validated, $request) {
+                $imagePath = $request->file('proof_image')->store('proofs', 'public');
+                
+                $pengajuan->proof_image = $imagePath;
+                $pengajuan->proof_description = $validated['proof_description'];
+                $pengajuan->final_cost = $validated['total_cost'];
+                $pengajuan->status = 'final_approval';
+                $pengajuan->save();
+
+                ActivityLogger::log(
+                    'submit_proof',
+                    'asset_request',
+                    'Submitted proof for asset request: ' . $pengajuan->name
+                );
+            });
+
+            return redirect()->route('pengajuan.index', ['status' => 'bukti'])
+                ->with('success', 'Bukti berhasil disubmit dan menunggu persetujuan final.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mengupload bukti: ' . $e->getMessage());
+        }
+    }
+
+    public function showProofForm(AssetRequest $pengajuan)
+    {
+        if ($pengajuan->status !== 'active') {
+            return redirect()->route('pengajuan.index')
+                ->with('error', 'Pengajuan harus berstatus aktif untuk submit bukti.');
+        }
+
+        return view('pengajuan.submit-proof', compact('pengajuan'));
+    }
+
+    public function finalApprove(AssetRequest $pengajuan)
+    {
+        try {
+            DB::transaction(function () use ($pengajuan) {
+                $pengajuan->status = 'completed';
+                $pengajuan->completed_at = now();
+                $pengajuan->save();
+
+                // Create asset record if needed
+                $this->createAssetFromRequest($pengajuan);
+
+                ActivityLogger::log(
+                    'final_approve',
+                    'asset_request',
+                    'Menyetujui final pengajuan asset: ' . $pengajuan->name
+                );
+            });
+
+            return redirect()->route('pengajuan.approvals')
+                ->with('success', 'Pengajuan telah disetujui final dan asset telah dibuat.');
+        } catch (\Exception $e) {
+            return redirect()->route('pengajuan.approvals')
+                ->with('error', 'Gagal menyetujui final: ' . $e->getMessage());
+        }
+    }
+
+    public function finalReject(Request $request, AssetRequest $pengajuan)
+    {
+        try {
+            $pengajuan->status = 'rejected';
+            $pengajuan->rejection_notes = $request->notes;
+            $pengajuan->rejected_at = now();
+            $pengajuan->save();
+
+            ActivityLogger::log(
+                'final_reject',
+                'asset_request',
+                'Menolak final pengajuan asset: ' . $pengajuan->name,
+                null,
+                ['notes' => $request->notes]
+            );
+
+            return redirect()->route('pengajuan.approvals')
+                ->with('success', 'Pengajuan telah ditolak pada tahap final.');
+        } catch (\Exception $e) {
+            return redirect()->route('pengajuan.approvals')
+                ->with('error', 'Gagal menolak pengajuan: ' . $e->getMessage());
+        }
+    }
+
+    protected function createAssetFromRequest(AssetRequest $pengajuan)
+    {
+        $asset = new Asset();
+        $asset->name = $pengajuan->name;
+        $asset->category_id = Category::where('name', $pengajuan->category)->first()->id;
+        $asset->room_id = $pengajuan->room_id;
+        $asset->description = $pengajuan->description;
+        $asset->purchase_date = now();
+        $asset->purchase_cost = $pengajuan->final_cost;
+        $asset->status = 'siap_dipakai';
+
+        // Generate unique asset tag
+        $nextId = Asset::max('id') + 1;
+        $asset->asset_tag = 'TMS-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+        
+        $asset->save();
+        
+        return $asset;
     }
 } 

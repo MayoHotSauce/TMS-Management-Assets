@@ -129,7 +129,7 @@
                         <tbody>
                             @foreach($recentMaintenance as $maintenance)
                                 <tr>
-                                    <td>{{ $maintenance->asset->name }}</td>
+                                    <td>{{ $maintenance->asset?->name ?? 'No Asset' }}</td>
                                     <td>{{ $maintenance->description }}</td>
                                 </tr>
                             @endforeach

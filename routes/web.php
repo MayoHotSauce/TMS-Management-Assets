@@ -191,3 +191,29 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{pengajuan}', [PengajuanController::class, 'show'])->name('show');
     });
 });
+
+Route::post('/maintenance/{maintenance}/revise', [MaintenanceController::class, 'revise'])
+    ->name('maintenance.revise');
+
+Route::post('/maintenance/{maintenance}/restart', [MaintenanceController::class, 'restart'])
+    ->name('maintenance.restart');
+
+// Existing routes
+Route::prefix('pengajuan')->group(function () {
+    // Basic CRUD routes
+    Route::get('/', [PengajuanController::class, 'index'])->name('pengajuan.index');
+    Route::get('/create', [PengajuanController::class, 'create'])->name('pengajuan.create');
+    Route::post('/', [PengajuanController::class, 'store'])->name('pengajuan.store');
+    Route::get('/{pengajuan}', [PengajuanController::class, 'show'])->name('pengajuan.show');
+    
+    // Approval routes
+    Route::get('/approvals/list', [PengajuanController::class, 'approvals'])->name('pengajuan.approvals');
+    Route::post('/{pengajuan}/approve', [PengajuanController::class, 'approve'])->name('pengajuan.approve');
+    Route::post('/{pengajuan}/reject', [PengajuanController::class, 'reject'])->name('pengajuan.reject');
+    
+    // New routes for proof submission and final approval
+    Route::get('/{pengajuan}/submit-proof', [PengajuanController::class, 'showProofForm'])->name('pengajuan.proof-form');
+    Route::post('/{pengajuan}/submit-proof', [PengajuanController::class, 'submitProof'])->name('pengajuan.submit-proof');
+    Route::post('/{pengajuan}/final-approve', [PengajuanController::class, 'finalApprove'])->name('pengajuan.final-approve');
+    Route::post('/{pengajuan}/final-reject', [PengajuanController::class, 'finalReject'])->name('pengajuan.final-reject');
+});

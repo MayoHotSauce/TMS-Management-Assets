@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Create New Maintenance')
+@section('title', 'Buat Maintenance Baru')
 
 @section('content_header')
-    <h1>Create New Maintenance Log</h1>
+    <h1>Buat Log Maintenance Baru</h1>
 @stop
 
 @section('content')
@@ -33,7 +33,7 @@
                     <div class="form-group">
                         <label for="barang_id">Asset</label>
                         <select name="barang_id" id="barang_id" class="form-control @error('barang_id') is-invalid @enderror" required>
-                            <option value="">Select Asset</option>
+                            <option value="">Pilih Asset</option>
                             @foreach($assets as $asset)
                                 <option value="{{ $asset->id }}" {{ old('barang_id') == $asset->id ? 'selected' : '' }}>
                                     {{ $asset->name }} ({{ $asset->asset_tag }})
@@ -48,7 +48,7 @@
                 
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="maintenance_date">Maintenance Date</label>
+                        <label for="maintenance_date">Tanggal Maintenance</label>
                         <input type="date" name="maintenance_date" id="maintenance_date" 
                             value="{{ old('maintenance_date') }}"
                             class="form-control @error('maintenance_date') is-invalid @enderror" required>
@@ -60,7 +60,7 @@
             </div>
 
             <div class="form-group">
-                <label for="description">Description</label>
+                <label for="description">Deskripsi</label>
                 <textarea name="description" id="description" rows="3" 
                     class="form-control @error('description') is-invalid @enderror" required>{{ old('description') }}</textarea>
                 @error('description')
@@ -71,7 +71,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="cost">Cost</label>
+                        <label for="cost">Biaya</label>
                         <input type="number" name="cost" id="cost" 
                             value="{{ old('cost') }}"
                             class="form-control @error('cost') is-invalid @enderror" required>
@@ -83,7 +83,7 @@
 
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="performed_by">Performed By</label>
+                        <label for="performed_by">Dikerjakan Oleh</label>
                         <input type="text" name="performed_by" id="performed_by" 
                             value="{{ old('performed_by') }}"
                             class="form-control @error('performed_by') is-invalid @enderror" required>
@@ -95,8 +95,8 @@
             </div>
 
             <div class="mt-4">
-                <button type="submit" class="btn btn-primary">Create Maintenance Log</button>
-                <a href="{{ route('maintenance.index') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Buat Log Maintenance</button>
+                <a href="{{ route('maintenance.index') }}" class="btn btn-secondary">Batal</a>
             </div>
         </form>
     </div>

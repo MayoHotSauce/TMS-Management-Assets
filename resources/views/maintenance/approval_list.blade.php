@@ -32,7 +32,7 @@
                         <tbody>
                             @foreach($initialApprovals as $maintenance)
                                 <tr>
-                                    <td>{{ $maintenance->asset->name }}</td>
+                                    <td>{{ $maintenance->asset?->name ?? 'No Asset' }}</td>
                                     <td>{{ $maintenance->maintenance_date }}</td>
                                     <td>{{ Str::limit($maintenance->description, 50) }}</td>
                                     <td>Rp {{ number_format($maintenance->cost, 0, ',', '.') }}</td>
@@ -94,6 +94,7 @@
                                     <td>
                                         <a href="{{ route('maintenance.approval-detail', $maintenance->id) }}" class="btn btn-sm btn-info">Detail</a>
                                         <button type="button" class="btn btn-sm btn-success" onclick="confirmApprove({{ $maintenance->id }})">Setujui</button>
+                                        <button type="button" class="btn btn-sm btn-warning" onclick="showRevisionPrompt({{ $maintenance->id }})">Revisi</button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -117,7 +118,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p><strong>Asset:</strong> {{ $maintenance->asset->name }}</p>
+                        <p><strong>Asset:</strong> {{ $maintenance->asset?->name ?? 'No Asset' }}</p>
                         <p><strong>Tanggal Permintaan:</strong> {{ $maintenance->maintenance_date }}</p>
                         <p><strong>Deskripsi:</strong> {{ $maintenance->description }}</p>
                         <p><strong>Estimasi Biaya:</strong> Rp {{ number_format($maintenance->cost, 0, ',', '.') }}</p>
@@ -258,6 +259,47 @@
                     csrfToken.name = '_token';
                     csrfToken.value = '{{ csrf_token() }}';
                     form.appendChild(csrfToken);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function showRevisionPrompt(id) {
+            Swal.fire({
+                title: 'Revisi Maintenance',
+                input: 'textarea',
+                inputLabel: 'Apa yang harus Direvisi',
+                inputPlaceholder: 'Masukkan detail revisi...',
+                showCancelButton: true,
+                confirmButtonText: 'Kirim',
+                cancelButtonText: 'Batal',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Anda harus menulis sesuatu!'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create and submit form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ url("/maintenance") }}/' + id + '/revise';
+                    
+                    // Add CSRF token
+                    const csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfToken);
+                    
+                    // Add revision notes
+                    const revisionNotes = document.createElement('input');
+                    revisionNotes.type = 'hidden';
+                    revisionNotes.name = 'revision_notes';
+                    revisionNotes.value = result.value;
+                    form.appendChild(revisionNotes);
                     
                     document.body.appendChild(form);
                     form.submit();

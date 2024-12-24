@@ -17,15 +17,18 @@ class MaintenanceController extends Controller
         $query = MaintenanceLog::with('asset');
         
         switch ($status) {
+            case 'scheduled':
+                $query->whereIn('status', ['scheduled', 'pending_final_approval']);
+                break;
             case 'completed':
                 $query->where('status', 'completed');
                 break;
-            case 'archived':
+            case 'revisi':
                 $query->where('status', 'archived');
                 break;
             case 'active':
             default:
-                $query->whereIn('status', ['pending', 'in_progress']);
+                $query->where('status', 'in_progress');
                 break;
         }
         
@@ -306,5 +309,48 @@ class MaintenanceController extends Controller
 
         return redirect()->back()
             ->with('success', 'Maintenance berhasil diarsipkan.');
+    }
+
+    public function revise(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $maintenance = MaintenanceLog::findOrFail($id);
+            $maintenance->status = 'archived'; // Using archived status for revisions
+            $maintenance->revision_notes = $request->revision_notes;
+            $maintenance->save();
+            
+            DB::commit();
+            
+            return redirect()->route('maintenance.approvals')
+                ->with('success', 'Maintenance telah dikirim untuk revisi');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error mengirim revisi: ' . $e->getMessage());
+        }
+    }
+
+    public function restart($id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $maintenance = MaintenanceLog::findOrFail($id);
+            $maintenance->status = 'in_progress';
+            $maintenance->save();
+            
+            DB::commit();
+            
+            return redirect('/maintenance?status=active')
+                ->with('success', 'Maintenance berhasil dikembalikan ke status Sedang Dikerjakan');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Gagal mengubah status: ' . $e->getMessage());
+        }
     }
 }

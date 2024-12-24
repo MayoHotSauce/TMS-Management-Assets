@@ -16,21 +16,27 @@
     <div class="card-header p-0">
         <ul class="nav nav-tabs">
             <li class="nav-item">
+                <a class="nav-link {{ $status === 'pending' ? 'active' : '' }}" 
+                   href="{{ route('pengajuan.index', ['status' => 'pending']) }}">
+                    Persetujuan
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ $status === 'active' ? 'active' : '' }}" 
                    href="{{ route('pengajuan.index', ['status' => 'active']) }}">
-                    Active
+                    Aktif
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $status === 'bukti' ? 'active' : '' }}" 
+                   href="{{ route('pengajuan.index', ['status' => 'bukti']) }}">
+                    Bukti
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $status === 'completed' ? 'active' : '' }}" 
                    href="{{ route('pengajuan.index', ['status' => 'completed']) }}">
-                    Completed
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ $status === 'archived' ? 'active' : '' }}" 
-                   href="{{ route('pengajuan.index', ['status' => 'archived']) }}">
-                    Archived
+                    Selesai
                 </a>
             </li>
         </ul>
@@ -60,16 +66,22 @@
                     <td>
                         @switch($request->status)
                             @case('pending')
-                                <span class="badge badge-warning">Pending</span>
+                                <span class="badge badge-warning">Menunggu Persetujuan</span>
                                 @break
-                            @case('approved')
-                                <span class="badge badge-success">Approved</span>
+                            @case('active')
+                                <span class="badge badge-info">Aktif</span>
                                 @break
-                            @case('declined')
-                                <span class="badge badge-danger">Declined</span>
+                            @case('bukti')
+                                <span class="badge badge-primary">Menunggu Bukti</span>
                                 @break
-                            @case('archived')
-                                <span class="badge badge-secondary">Archived</span>
+                            @case('final_approval')
+                                <span class="badge badge-warning">Menunggu Final</span>
+                                @break
+                            @case('completed')
+                                <span class="badge badge-success">Selesai</span>
+                                @break
+                            @case('rejected')
+                                <span class="badge badge-danger">Ditolak</span>
                                 @break
                         @endswitch
                     </td>
