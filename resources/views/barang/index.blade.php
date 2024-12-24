@@ -75,6 +75,13 @@
                             <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-info">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <button type="button" class="btn btn-sm btn-warning change-status-btn" 
+                                    data-toggle="modal" 
+                                    data-target="#changeStatusModal" 
+                                    data-id="{{ $item->id }}"
+                                    data-current-status="{{ $item->status }}">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
                             <form action="{{ route('barang.destroy', $item->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
@@ -210,6 +217,42 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="executePrint()">Print</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Change Modal -->
+    <div class="modal fade" id="changeStatusModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Asset Status</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form id="changeStatusForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="status">New Status</label>
+                            <select name="status" id="status" class="form-control" required>
+                                <option value="siap_dipakai">Siap Dipakai</option>
+                                <option value="sedang_dipakai">Sedang Dipakai</option>
+                                <option value="dalam_perbaikan">Dalam Perbaikan</option>
+                                <option value="rusak">Rusak</option>
+                                <option value="siap_dipinjam">Siap Dipinjam</option>
+                                <option value="sedang_dipinjam">Sedang Dipinjam</option>
+                                <option value="dimusnahkan">Dimusnahkan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Status</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -453,6 +496,18 @@ function printLabels(items, layout) {
 $(document).ready(function() {
     $('#addMoreItems').change();
     $('.additional-item-check').change();
+
+    // Handle status change button click
+    $('.change-status-btn').click(function() {
+        const id = $(this).data('id');
+        const currentStatus = $(this).data('current-status');
+        
+        // Set the form action URL
+        $('#changeStatusForm').attr('action', `/barang/${id}/change-status`);
+        
+        // Set the current status in the dropdown
+        $('#status').val(currentStatus);
+    });
 });
 </script>
 @stop

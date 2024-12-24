@@ -30,4 +30,23 @@ class BarangController extends Controller
 
         return view('barang.index', compact('barang'));
     }
+
+    public function changeStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:siap_dipakai,sedang_dipakai,dalam_perbaikan,rusak,siap_dipinjam,sedang_dipinjam,dimusnahkan'
+        ]);
+
+        try {
+            $barang = Asset::findOrFail($id);
+            $barang->status = $request->status;
+            $barang->save();
+
+            return redirect()->route('barang.index')
+                ->with('success', 'Status asset berhasil diubah.');
+        } catch (\Exception $e) {
+            return redirect()->route('barang.index')
+                ->with('error', 'Gagal mengubah status asset: ' . $e->getMessage());
+        }
+    }
 }
