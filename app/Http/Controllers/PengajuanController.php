@@ -27,7 +27,7 @@ class PengajuanController extends Controller
                 $query->where('status', 'approved');
                 break;
             case 'bukti':
-                $query->where('status', 'bukti');
+                $query->whereIn('status', ['bukti', 'final_approval']);
                 break;
             case 'completed':
                 $query->whereIn('status', ['completed', 'rejected']);
@@ -86,7 +86,7 @@ class PengajuanController extends Controller
             ->latest()
             ->get();
 
-        $finalApprovals = AssetRequest::where('status', 'bukti')
+        $finalApprovals = AssetRequest::whereIn('status', ['bukti', 'final_approval'])
             ->latest()
             ->get();
 
