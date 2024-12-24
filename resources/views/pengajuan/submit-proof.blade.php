@@ -20,9 +20,23 @@
                 <div class="card-header">
                     <h3 class="card-title">Form Bukti Pembelian</h3>
                 </div>
-                <form action="{{ route('pengajuan.submit-proof', $pengajuan->id) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('pengajuan.submit-proof', $pengajuan->id) }}" 
+                      method="POST" 
+                      enctype="multipart/form-data" 
+                      id="proofForm">
                     @csrf
                     <div class="card-body">
+                        <!-- Debug info -->
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <ul>
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -32,48 +46,67 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Estimasi Biaya Awal</label>
+                                    <label>Estimasi Biaya</label>
                                     <input type="text" class="form-control" value="Rp {{ number_format($pengajuan->price, 0, ',', '.') }}" readonly>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="proof_image">Foto Bukti Pembelian <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control @error('proof_image') is-invalid @enderror" 
-                                   id="proof_image" name="proof_image" accept="image/*" required>
-                            <small class="text-muted">Format: JPG, PNG, maksimal 2MB</small>
+                            <label>Foto Bukti Pembelian <span class="text-danger">*</span></label>
+                            <div class="custom-file">
+                                <input type="file" 
+                                       class="custom-file-input @error('proof_image') is-invalid @enderror" 
+                                       id="proof_image" 
+                                       name="proof_image" 
+                                       accept="image/*" 
+                                       capture="environment"
+                                       required>
+                                <label class="custom-file-label" for="proof_image">Pilih file atau ambil foto</label>
+                            </div>
                             @error('proof_image')
-                                <span class="invalid-feedback">{{ $message }}</span>
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
                             @enderror
+                            <div class="mt-2">
+                                <img id="image-preview" src="#" alt="Preview" style="max-width: 300px; display: none;">
+                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="total_cost">Total Biaya Aktual <span class="text-danger">*</span></label>
+                            <label>Total Biaya Aktual <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text">Rp</span>
                                 </div>
-                                <input type="number" class="form-control @error('total_cost') is-invalid @enderror" 
-                                       id="total_cost" name="total_cost" required>
+                                <input type="number" 
+                                       class="form-control @error('final_cost') is-invalid @enderror" 
+                                       name="final_cost" 
+                                       required>
                             </div>
-                            @error('total_cost')
-                                <span class="invalid-feedback">{{ $message }}</span>
+                            @error('final_cost')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
                             @enderror
                         </div>
 
                         <div class="form-group">
-                            <label for="proof_description">Keterangan <span class="text-danger">*</span></label>
+                            <label>Keterangan <span class="text-danger">*</span></label>
                             <textarea class="form-control @error('proof_description') is-invalid @enderror" 
-                                      id="proof_description" name="proof_description" rows="3" required
-                                      placeholder="Jelaskan detail pembelian, termasuk jika ada perbedaan harga"></textarea>
+                                      name="proof_description" 
+                                      rows="3" 
+                                      required></textarea>
                             @error('proof_description')
-                                <span class="invalid-feedback">{{ $message }}</span>
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
                             @enderror
                         </div>
                     </div>
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">Submit Bukti</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">Submit Bukti</button>
                         <a href="{{ route('pengajuan.index') }}" class="btn btn-secondary">Batal</a>
                     </div>
                 </form>
@@ -83,19 +116,69 @@
 </div>
 @endsection
 
-@push('js')
+@section('js')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
-    // Preview image before upload
+    $('#proofForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: $(this).attr('action'),
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Bukti pembelian berhasil disubmit',
+                    icon: 'success'
+                }).then(() => {
+                    window.location.href = "{{ route('pengajuan.index') }}";
+                });
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Terjadi kesalahan saat submit bukti',
+                    icon: 'error'
+                });
+            }
+        });
+    });
+
+    // Preview image
     $("#proof_image").change(function() {
         if (this.files && this.files[0]) {
             let reader = new FileReader();
             reader.onload = function(e) {
-                $('#image-preview').attr('src', e.target.result);
+                $('#image-preview').attr('src', e.target.result).show();
             }
             reader.readAsDataURL(this.files[0]);
         }
     });
 });
 </script>
-@endpush 
+@stop
+
+@push('css')
+<style>
+.custom-file-input:lang(en)~.custom-file-label::after {
+    content: "Browse";
+}
+.image-preview-container {
+    margin-top: 10px;
+    text-align: center;
+}
+#image-preview {
+    max-width: 100%;
+    max-height: 300px;
+    margin-top: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+</style>
+@endpush

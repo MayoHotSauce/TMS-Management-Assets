@@ -89,22 +89,17 @@
                     <td>
                         <div class="btn-group" role="group">
                             <a href="{{ route('pengajuan.show', $request->id) }}" 
-                               class="btn btn-info btn-sm mr-1" 
+                               class="btn btn-info btn-sm" 
                                title="Detail">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            @if($request->status !== 'archived')
-                                <form action="{{ route('pengajuan.archive', $request->id) }}" 
-                                      method="POST" 
-                                      class="d-inline ml-1">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" 
-                                            class="btn btn-secondary btn-sm archive-btn" 
-                                            title="Arsipkan">
-                                        <i class="fas fa-archive"></i>
-                                    </button>
-                                </form>
+                            @if($status === 'active')
+                                <a href="{{ route('pengajuan.submit-proof', $request->id) }}" 
+                                   class="btn btn-success btn-sm ms-1 submit-proof-btn" 
+                                   title="Submit Bukti"
+                                   data-request-id="{{ $request->id }}">
+                                    <i class="fas fa-check"></i>
+                                </a>
                             @endif
                         </div>
                     </td>
@@ -126,25 +121,26 @@
 @stop
 
 @section('js')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
-        // Archive confirmation
-        $('.archive-btn').click(function(e) {
+        // Submit Proof confirmation
+        $('.submit-proof-btn').click(function(e) {
             e.preventDefault();
-            const form = $(this).closest('form');
+            const href = $(this).attr('href');
             
             Swal.fire({
-                title: 'Konfirmasi Arsip',
-                text: "Apakah anda yakin ingin mengarsipkan pengajuan ini?",
-                icon: 'warning',
+                title: 'Submit Bukti Pembelian',
+                text: "Anda akan mengirimkan bukti pembelian untuk asset ini. Lanjutkan?",
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
+                confirmButtonColor: '#28a745',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Arsipkan!',
+                confirmButtonText: 'Ya, Submit Bukti!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit();
+                    window.location.href = href;
                 }
             });
         });

@@ -81,7 +81,8 @@ Route::get('/test-barang', function() {
 
 // PENGAJUAN ASSET
 Route::middleware(['auth'])->group(function () {
-    Route::get('pengajuan/approvals', [PengajuanController::class, 'approvals'])->name('pengajuan.approvals');
+    Route::get('/pengajuan/approvals', [PengajuanController::class, 'approvals'])
+        ->name('pengajuan.approvals');
     
     Route::get('pengajuan', [PengajuanController::class, 'index'])->name('pengajuan.index');
     Route::get('pengajuan/create', [PengajuanController::class, 'create'])->name('pengajuan.create');
@@ -217,3 +218,13 @@ Route::prefix('pengajuan')->group(function () {
     Route::post('/{pengajuan}/final-approve', [PengajuanController::class, 'finalApprove'])->name('pengajuan.final-approve');
     Route::post('/{pengajuan}/final-reject', [PengajuanController::class, 'finalReject'])->name('pengajuan.final-reject');
 });
+
+Route::get('/pengajuan/{pengajuan}/submit-proof', [PengajuanController::class, 'showSubmitProofForm'])
+    ->name('pengajuan.show-proof-form');
+Route::post('/pengajuan/{pengajuan}/submit-proof', [PengajuanController::class, 'submitProof'])
+    ->name('pengajuan.submit-proof');
+
+Route::post('/pengajuan/{pengajuan}/final-approve', [PengajuanController::class, 'finalApprove'])
+    ->name('pengajuan.final-approve');
+Route::post('/pengajuan/{pengajuan}/final-reject', [PengajuanController::class, 'finalReject'])
+    ->name('pengajuan.final-reject');

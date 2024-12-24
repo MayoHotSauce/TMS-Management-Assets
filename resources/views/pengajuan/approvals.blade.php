@@ -4,6 +4,12 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+.modal-image {
+    max-width: 100%;
+    height: auto;
+}
+</style>
 @stop
 
 @section('content')
@@ -101,11 +107,15 @@
                             <td>Rp {{ number_format($request->final_cost, 0, ',', '.') }}</td>
                             <td>{{ $request->requester_email }}</td>
                             <td>
-                                <a href="{{ Storage::url($request->proof_image) }}" 
-                                   target="_blank"
-                                   class="btn btn-sm btn-info">
-                                    <i class="fas fa-image"></i> Lihat
-                                </a>
+                                @if($request->proof_image)
+                                    <button type="button" 
+                                            class="btn btn-sm btn-info preview-image-btn"
+                                            data-image-url="{{ Storage::url('proofs/' . $request->proof_image) }}">
+                                        <i class="fas fa-image"></i> Lihat
+                                    </button>
+                                @else
+                                    -
+                                @endif
                             </td>
                             <td>
                                 <div class="btn-group" style="gap: 5px;">
@@ -142,6 +152,23 @@
 </div>
 
 @include('pengajuan.reject-modal')
+
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" role="dialog" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePreviewModalLabel">Bukti Pembelian</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" id="previewImage" class="modal-image">
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('js')
@@ -154,7 +181,7 @@ $(document).ready(function() {
         
         Swal.fire({
             title: 'Konfirmasi Persetujuan',
-            text: "Apakah anda yakin ingin menyetujui pengajuan ini?",
+            text: "Apakah Anda yakin ingin menyetujui pengajuan aset ini?",
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#28a745',
@@ -163,12 +190,10 @@ $(document).ready(function() {
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Create and submit form
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = `/pengajuan/${requestId}/approve`;
                 
-                // Add CSRF token
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';
                 csrfToken.name = '_token';
@@ -181,13 +206,14 @@ $(document).ready(function() {
         });
     });
 
-    // Final Approval
+    // Final Approval with AJAX
     $('.final-approve-btn').click(function() {
         const requestId = $(this).data('request-id');
+        const button = $(this);
         
         Swal.fire({
             title: 'Konfirmasi Persetujuan Final',
-            text: "Apakah anda yakin ingin menyetujui final pengajuan ini?",
+            text: "Apakah Anda yakin ingin memberikan persetujuan final untuk pengajuan ini?",
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#28a745',
@@ -196,20 +222,49 @@ $(document).ready(function() {
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/pengajuan/${requestId}/final-approve`;
-                
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                form.appendChild(csrfToken);
-                
-                document.body.appendChild(form);
-                form.submit();
+                $.ajax({
+                    url: `/pengajuan/${requestId}/final-approve`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: 'Pengajuan telah disetujui final',
+                                icon: 'success'
+                            }).then(() => {
+                                // Remove the row from the table
+                                button.closest('tr').remove();
+                                
+                                // If table is empty, show empty message
+                                if ($('#finalApprovalsTable tbody tr').length === 0) {
+                                    $('#finalApprovalsTable tbody').append(
+                                        '<tr><td colspan="8" class="text-center">Tidak ada pengajuan yang menunggu persetujuan final</td></tr>'
+                                    );
+                                }
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Terjadi kesalahan saat menyetujui pengajuan',
+                            icon: 'error'
+                        });
+                    }
+                });
             }
         });
+    });
+
+    // Image preview modal
+    $('.preview-image-btn').click(function(e) {
+        e.preventDefault();
+        var imageUrl = $(this).data('image-url');
+        $('#previewImage').attr('src', imageUrl);
+        $('#imagePreviewModal').modal('show');
     });
 });
 </script>

@@ -83,12 +83,10 @@ class PengajuanController extends Controller
     public function approvals()
     {
         $firstApprovals = AssetRequest::where('status', 'pending')
-            ->with(['user', 'room'])
             ->latest()
             ->get();
 
-        $finalApprovals = AssetRequest::where('status', 'final_approval')
-            ->with(['user', 'room'])
+        $finalApprovals = AssetRequest::where('status', 'bukti')
             ->latest()
             ->get();
 
@@ -97,10 +95,20 @@ class PengajuanController extends Controller
 
     public function approve(AssetRequest $pengajuan)
     {
+        \Log::info('Approve method called for request:', ['id' => $pengajuan->id]);
+        
         try {
-            $pengajuan->status = 'active';
+            DB::beginTransaction();
+            
+            \Log::info('Current status:', ['status' => $pengajuan->status]);
+            
+            $pengajuan->status = 'approved';
             $pengajuan->approved_at = now();
             $pengajuan->save();
+            
+            \Log::info('Status updated to approved');
+            
+            DB::commit();
 
             ActivityLogger::log(
                 'approve',
@@ -111,6 +119,9 @@ class PengajuanController extends Controller
             return redirect()->route('pengajuan.approvals')
                 ->with('success', 'Pengajuan telah disetujui dan menunggu bukti pembelian.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error in approve method:', ['error' => $e->getMessage()]);
+            
             return redirect()->route('pengajuan.approvals')
                 ->with('error', 'Gagal menyetujui pengajuan: ' . $e->getMessage());
         }
@@ -141,7 +152,6 @@ class PengajuanController extends Controller
 
     public function show(AssetRequest $pengajuan)
     {
-        $pengajuan = AssetRequest::findOrFail($pengajuan->id);
         return view('pengajuan.show', compact('pengajuan'));
     }
 
@@ -160,71 +170,73 @@ class PengajuanController extends Controller
             ->with('success', 'Pengajuan berhasil diarsipkan.');
     }
 
-    public function submitProof(Request $request, AssetRequest $pengajuan)
+    public function showSubmitProofForm(AssetRequest $pengajuan)
     {
-        $validated = $request->validate([
-            'proof_image' => 'required|image|max:2048',
-            'proof_description' => 'required|string',
-            'total_cost' => 'required|numeric'
-        ]);
-
-        try {
-            DB::transaction(function () use ($pengajuan, $validated, $request) {
-                $imagePath = $request->file('proof_image')->store('proofs', 'public');
-                
-                $pengajuan->proof_image = $imagePath;
-                $pengajuan->proof_description = $validated['proof_description'];
-                $pengajuan->final_cost = $validated['total_cost'];
-                $pengajuan->status = 'final_approval';
-                $pengajuan->save();
-
-                ActivityLogger::log(
-                    'submit_proof',
-                    'asset_request',
-                    'Submitted proof for asset request: ' . $pengajuan->name
-                );
-            });
-
-            return redirect()->route('pengajuan.index', ['status' => 'bukti'])
-                ->with('success', 'Bukti berhasil disubmit dan menunggu persetujuan final.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengupload bukti: ' . $e->getMessage());
-        }
-    }
-
-    public function showProofForm(AssetRequest $pengajuan)
-    {
-        if ($pengajuan->status !== 'active') {
+        if ($pengajuan->status !== 'approved') {
             return redirect()->route('pengajuan.index')
-                ->with('error', 'Pengajuan harus berstatus aktif untuk submit bukti.');
+                ->with('error', 'Pengajuan harus berstatus approved untuk submit bukti.');
         }
 
         return view('pengajuan.submit-proof', compact('pengajuan'));
     }
 
-    public function finalApprove(AssetRequest $pengajuan)
+    public function submitProof(Request $request, AssetRequest $pengajuan)
+    {
+        $request->validate([
+            'proof_image' => 'required|image|max:2048',
+            'final_cost' => 'required|numeric|min:0',
+            'proof_description' => 'required|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if ($request->hasFile('proof_image')) {
+                $file = $request->file('proof_image');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('public/proofs', $filename);
+                
+                $pengajuan->proof_image = $filename;
+            }
+
+            $pengajuan->status = 'final_approval';
+            $pengajuan->final_cost = $request->final_cost;
+            $pengajuan->proof_description = $request->proof_description;
+            $pengajuan->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bukti pembelian berhasil disubmit'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error in submitProof:', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal submit bukti pembelian: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function finalApprove(Request $request, AssetRequest $pengajuan)
     {
         try {
-            DB::transaction(function () use ($pengajuan) {
-                $pengajuan->status = 'completed';
-                $pengajuan->completed_at = now();
-                $pengajuan->save();
+            $pengajuan->status = 'completed';
+            $pengajuan->save();
 
-                // Create asset record if needed
-                $this->createAssetFromRequest($pengajuan);
-
-                ActivityLogger::log(
-                    'final_approve',
-                    'asset_request',
-                    'Menyetujui final pengajuan asset: ' . $pengajuan->name
-                );
-            });
-
-            return redirect()->route('pengajuan.approvals')
-                ->with('success', 'Pengajuan telah disetujui final dan asset telah dibuat.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengajuan telah disetujui final'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->route('pengajuan.approvals')
-                ->with('error', 'Gagal menyetujui final: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyetujui pengajuan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -232,23 +244,18 @@ class PengajuanController extends Controller
     {
         try {
             $pengajuan->status = 'rejected';
-            $pengajuan->rejection_notes = $request->notes;
-            $pengajuan->rejected_at = now();
+            $pengajuan->rejection_reason = $request->reason;
             $pengajuan->save();
 
-            ActivityLogger::log(
-                'final_reject',
-                'asset_request',
-                'Menolak final pengajuan asset: ' . $pengajuan->name,
-                null,
-                ['notes' => $request->notes]
-            );
-
-            return redirect()->route('pengajuan.approvals')
-                ->with('success', 'Pengajuan telah ditolak pada tahap final.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengajuan telah ditolak'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->route('pengajuan.approvals')
-                ->with('error', 'Gagal menolak pengajuan: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menolak pengajuan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
