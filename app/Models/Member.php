@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Member extends Model
 {
     protected $table = 'members';
-    protected $primaryKey = 'member_id';
+    protected $primaryKey = 'id_member';
 
     protected $fillable = [
         'nama',
-        // ... other fields
+        'email',
+        'nik',
+        // ... other fillable fields
     ];
 } 

@@ -14,6 +14,7 @@ use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PengajuanController;
 use App\Http\Controllers\BarangController;
+use App\Http\Controllers\RolePermController;
 
 /*
 |--------------------------------------------------------------------------
@@ -234,3 +235,15 @@ Route::post('/pengajuan/{pengajuan}/final-reject', [PengajuanController::class, 
 
 Route::put('/barang/{barang}/change-status', [App\Http\Controllers\BarangController::class, 'changeStatus'])
     ->name('barang.change-status');
+
+Route::get('/role-permissions', [RolePermController::class, 'index'])->name('roleperm.index');
+
+// Add this new route for assigning roles
+Route::post('/role-permissions/assign', [RolePermController::class, 'assign'])->name('roleperm.assign');
+
+Route::get('/role-permissions/{id}/edit', [RolePermController::class, 'edit'])->name('roleperm.edit');
+
+Route::get('/get-users-by-jabatan/{jabatan_id}', [RolePermController::class, 'getUsersByJabatan'])->name('users.by.jabatan');
+
+Route::get('/get-role-permissions/{role}', [RolePermController::class, 'getRolePermissions']);
+Route::get('/get-user-permissions/{user}', [RolePermController::class, 'getUserPermissions']);

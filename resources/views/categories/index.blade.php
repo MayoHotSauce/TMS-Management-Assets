@@ -8,7 +8,11 @@
             <h1>Categories Management</h1>
         </div>
         <div class="col-sm-6">
-            <a href="{{ route('categories.create') }}" class="btn btn-primary float-right">Create New Category</a>
+            @can('create_categories')
+                <a href="{{ route('categories.create') }}" class="btn btn-primary float-right">
+                    Create New Category
+                </a>
+            @endcan
         </div>
     </div>
 @stop
@@ -46,16 +50,23 @@
                             <td>{{ $category->description }}</td>
                             <td>{{ $category->created_at ? $category->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
                             <td>
-                                <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="d-inline">
-                                    <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-warning">
+                                @can('edit_categories')
+                                    <a href="{{ route('categories.edit', $category->id) }}" 
+                                       class="btn btn-sm btn-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                @endcan
+                                
+                                @can('delete_categories')
+                                    <form action="{{ route('categories.destroy', $category->id) }}" 
+                                          method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                @endcan
                             </td>
                         </tr>
                     @endforeach

@@ -9,12 +9,17 @@
         <div class="card-header">
             <h3 class="card-title">Asset List</h3>
             <div class="card-tools">
-                <button type="button" class="btn btn-info mr-2" data-toggle="modal" data-target="#logoModal">
-                    <i class="fas fa-image"></i> Update Logo
-                </button>
-                <a href="{{ route('barang.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add New Asset
-                </a>
+                @can('manage_stock')
+                    <button type="button" class="btn btn-info mr-2" data-toggle="modal" data-target="#logoModal">
+                        <i class="fas fa-image"></i> Update Logo
+                    </button>
+                @endcan
+                
+                @can('create_assets')
+                    <a href="{{ route('barang.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Asset
+                    </a>
+                @endcan
             </div>
         </div>
         <div class="card-body">
@@ -72,9 +77,11 @@
                                     onclick="showPrintDialog('{{ $item->name }}', '{{ $item->asset_tag }}', '{{ optional($item->room)->name }}', '{{ $item->purchase_date }}')">
                                 <i class="fas fa-print"></i>
                             </button>
-                            <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-edit"></i>
-                            </a>
+                            @can('edit_assets')
+                                <a href="{{ route('barang.edit', $item->id) }}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            @endcan
                             <button type="button" class="btn btn-sm btn-warning change-status-btn" 
                                     data-toggle="modal" 
                                     data-target="#changeStatusModal" 
@@ -82,13 +89,15 @@
                                     data-current-status="{{ $item->status }}">
                                 <i class="fas fa-exchange-alt"></i>
                             </button>
-                            <form action="{{ route('barang.destroy', $item->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @can('delete_assets')
+                                <form action="{{ route('barang.destroy', $item->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endcan
                         </td>
                     </tr>
                     @empty

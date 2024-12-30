@@ -322,81 +322,73 @@ return [
         ],
         [
             'text' => 'Kategori',
-            'url'  => 'categories',
-            'icon' => 'fas fa-list'
+            'icon' => 'fas fa-fw fa-list',
+            'route' => 'categories.index',
+            'can' => 'view_categories'
         ],
         [
             'text' => 'Ruangan',
-            'url'  => 'rooms',
-            'icon' => 'fas fa-door-open'
+            'icon' => 'fas fa-fw fa-building',
+            'route' => 'rooms.index',
+            'can' => 'view_rooms'
         ],
         [
             'text' => 'Daftar Barang',
-            'url'  => 'barang',
-            'icon' => 'fas fa-boxes'
+            'icon' => 'fas fa-fw fa-boxes',
+            'route' => 'barang.index',
+            'can' => 'view_assets'
         ],
         [
             'text' => 'Perbaikan',
-            'icon' => 'fas fa-tools',
+            'icon' => 'fas fa-fw fa-wrench',
             'submenu' => [
                 [
                     'text' => 'Daftar Perbaikan',
-                    'url'  => 'maintenance',
-                    'icon' => 'fas fa-list'
+                    'route' => 'maintenance.index',
+                    'can' => 'view_maintenance'
                 ],
                 [
                     'text' => 'Approval Perbaikan',
-                    'url'  => 'maintenance/approvals',
-                    'icon' => 'fas fa-check-circle'
-                ],
+                    'route' => 'maintenance.approvals',
+                    'can' => 'approve_maintenance'
+                ]
             ],
+            'can' => 'view_maintenance'
         ],
         [
             'text' => 'Pengajuan Asset',
-            'icon' => 'fas fa-file-invoice',
+            'icon' => 'fas fa-fw fa-file-alt',
+            'can' => 'view_asset_requests',
             'submenu' => [
                 [
                     'text' => 'Daftar Pengajuan',
-                    'url'  => 'pengajuan',
-                    'icon' => 'fas fa-list',
-                ],
-                [
-                    'text' => 'Buat Pengajuan',
-                    'url'  => 'pengajuan/create',
-                    'icon' => 'fas fa-plus',
+                    'url' => '/pengajuan',
+                    'can' => 'view_asset_requests'
                 ],
                 [
                     'text' => 'Approval Pengajuan',
-                    'url'  => 'pengajuan/approvals',
-                    'icon' => 'fas fa-check-circle',
-                ],
-            ],
+                    'url' => '/pengajuan/approvals',
+                    'can' => 'approve_asset_requests'
+                ]
+            ]
         ],
         [
             'text' => 'History',
-            'url'  => 'history',
-            'icon' => 'fas fa-history'
+            'icon' => 'fas fa-fw fa-history',
+            'url' => '/history',
+            'can' => 'view_history'
         ],
         [
             'text' => 'Stock Of Name',
-            'icon' => 'fas fa-box',
-            'submenu' => [
-                [
-                    'text' => 'Pengecekan Asset',
-                    'url'  => 'stock',
-                    'icon' => 'fas fa-clipboard-check'
-                ],
-                [
-                    'text' => 'List Pengecekan Asset',
-                    'url'  => 'stock/list',
-                    'icon' => 'fas fa-list'
-                ],
-            ],
+            'icon' => 'fas fa-fw fa-boxes',
+            'url' => '/stock',
+            'can' => 'view_stock'
         ],
         [
-            'text' => 'Role Perm',
-            'url'  => '#',
-            'icon' => 'fas fa-cog'
+            'text' => 'Role Permissions',
+            'icon' => 'fas fa-fw fa-user-lock',
+            'url' => '/roleperm',
+            'can' => 'manage_roles'
         ],
     ],
     /*

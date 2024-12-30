@@ -200,12 +200,7 @@ class StockController extends Controller
     {
         $stockChecks = StockCheck::with('creator')
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($check) {
-                $check->last_updated_at = $check->last_updated_at ? Carbon::parse($check->last_updated_at) : null;
-                $check->completed_at = $check->completed_at ? Carbon::parse($check->completed_at) : null;
-                return $check;
-            });
+            ->get();
 
         return view('stock.list', compact('stockChecks'));
     }

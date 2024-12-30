@@ -5,9 +5,11 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <h1>Daftar Maintenance</h1>
-        <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Buat Maintenance
-        </a>
+        @can('create_maintenance')
+            <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Buat Maintenance
+            </a>
+        @endcan
     </div>
 @stop
 
@@ -53,7 +55,15 @@
                     <tbody>
                         @forelse($maintenances as $maintenance)
                             <tr>
-                                <td>{{ $maintenance->id }}</td>
+                                <td>
+                                    @can('view_maintenance')
+                                        <a href="{{ route('maintenance.show', $maintenance->id) }}">
+                                            {{ $maintenance->id }}
+                                        </a>
+                                    @else
+                                        {{ $maintenance->id }}
+                                    @endcan
+                                </td>
                                 <td>
                                     @if($maintenance->asset)
                                         {{ $maintenance->asset->name ?? $maintenance->barang_id }}

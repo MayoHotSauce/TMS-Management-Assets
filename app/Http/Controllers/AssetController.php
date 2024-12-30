@@ -9,6 +9,7 @@ class AssetController extends Controller
 {
     public function index()
     {
+        $this->authorize('view_assets');
         \DB::enableQueryLog();
 
         // First get the maintenance counts
@@ -39,6 +40,7 @@ class AssetController extends Controller
 
     public function create()
     {
+        $this->authorize('create_assets');
         $categories = Category::all();
         $locations = Location::all();
         return view('assets.create', compact('categories', 'locations'));
@@ -67,5 +69,17 @@ class AssetController extends Controller
         );
 
         return redirect()->route('assets.index')->with('success', 'Asset created successfully');
+    }
+
+    public function edit(Asset $asset)
+    {
+        $this->authorize('edit_assets');
+        // ... rest of the code
+    }
+
+    public function destroy(Asset $asset)
+    {
+        $this->authorize('delete_assets');
+        // ... rest of the code
     }
 }
