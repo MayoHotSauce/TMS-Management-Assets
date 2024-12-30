@@ -37,8 +37,13 @@ class StockController extends Controller
     public function update(Request $request)
     {
         $stockCheck = StockCheck::firstOrCreate(
-            ['created_by' => auth()->id(), 'status' => 'ongoing'],
-            ['last_updated_at' => now()]
+            [
+                'created_by' => auth()->id(),
+                'status' => 'ongoing'
+            ],
+            [
+                'last_updated_at' => now()
+            ]
         );
 
         foreach ($request->input('assets', []) as $assetId) {

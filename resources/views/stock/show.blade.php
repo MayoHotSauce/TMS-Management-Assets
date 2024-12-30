@@ -19,7 +19,7 @@
     <div class="card-body">
         <div class="row mb-4">
             <div class="col-md-6">
-                <p><strong>Created By:</strong> {{ $stockCheck->creator->name }}</p>
+                <p><strong>Created By:</strong> {{ $stockCheck->creator->member->nama ?? 'N/A' }}</p>
                 <p><strong>Created At:</strong> {{ $stockCheck->created_at->format('Y-m-d H:i') }}</p>
                 <p><strong>Last Updated:</strong> {{ $stockCheck->last_updated_at ? $stockCheck->last_updated_at->format('Y-m-d H:i') : 'Not updated' }}</p>
                 <p><strong>Completed At:</strong> {{ $stockCheck->completed_at ? $stockCheck->completed_at->format('Y-m-d H:i') : 'Not completed' }}</p>

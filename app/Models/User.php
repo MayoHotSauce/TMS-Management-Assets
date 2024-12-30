@@ -51,4 +51,14 @@ class User extends Authenticatable
     {
         return 'member_id';
     }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id', 'member_id');
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->member->nama ?? null;
+    }
 }
