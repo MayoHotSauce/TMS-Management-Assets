@@ -247,3 +247,7 @@ Route::get('/get-users-by-jabatan/{jabatan_id}', [RolePermController::class, 'ge
 
 Route::get('/get-role-permissions/{role}', [RolePermController::class, 'getRolePermissions']);
 Route::get('/get-user-permissions/{user}', [RolePermController::class, 'getUserPermissions']);
+Route::group(['middleware' => ['auth']], function () {
+    Route::get('/role-permissions', [RolePermController::class, 'index'])->name('roleperm.index');
+    Route::post('/role-permissions/assign', [RolePermController::class, 'assign'])->name('roleperm.assign');
+});
