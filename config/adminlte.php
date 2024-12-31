@@ -326,19 +326,16 @@ return [
             'text' => 'Kategori',
             'icon' => 'fas fa-fw fa-list',
             'route' => 'categories.index',
-            'can' => 'view_categories'
         ],
         [
             'text' => 'Ruangan',
             'icon' => 'fas fa-fw fa-building',
             'route' => 'rooms.index',
-            'can' => 'view_rooms'
         ],
         [
             'text' => 'Daftar Barang',
             'icon' => 'fas fa-fw fa-boxes',
             'route' => 'barang.index',
-            'can' => 'view_assets'
         ],
         [
             'text' => 'Perbaikan',
@@ -347,30 +344,24 @@ return [
                 [
                     'text' => 'Daftar Perbaikan',
                     'route' => 'maintenance.index',
-                    'can' => 'view_maintenance'
                 ],
                 [
                     'text' => 'Approval Perbaikan',
                     'route' => 'maintenance.approvals',
-                    'can' => 'approve_maintenance'
                 ]
             ],
-            'can' => 'view_maintenance'
         ],
         [
             'text' => 'Pengajuan Asset',
             'icon' => 'fas fa-fw fa-file-alt',
-            'can' => 'view_asset_requests',
             'submenu' => [
                 [
                     'text' => 'Daftar Pengajuan',
                     'url' => '/pengajuan',
-                    'can' => 'view_asset_requests'
                 ],
                 [
                     'text' => 'Approval Pengajuan',
                     'url' => '/pengajuan/approvals',
-                    'can' => 'approve_asset_requests'
                 ]
             ]
         ],
@@ -378,19 +369,16 @@ return [
             'text' => 'History',
             'icon' => 'fas fa-fw fa-history',
             'url' => '/history',
-            'can' => 'view_history'
         ],
         [
             'text' => 'Stock Of Name',
             'icon' => 'fas fa-fw fa-boxes',
             'url' => '/stock',
-            'can' => 'view_stock'
         ],
         [
             'text' => 'Role Permissions',
             'icon' => 'fas fa-fw fa-user-lock',
             'url' => '/roleperm',
-            'can' => 'manage_roles'
         ],
     ],
     /*
