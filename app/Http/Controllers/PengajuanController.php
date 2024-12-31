@@ -13,6 +13,20 @@ use Illuminate\Support\Facades\DB;
 
 class PengajuanController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:view pengajuan', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create pengajuan', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit pengajuan', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete pengajuan', ['only' => ['destroy']]);
+        $this->middleware('permission:approve pengajuan', ['only' => ['approve']]);
+        $this->middleware('permission:reject pengajuan', ['only' => ['reject']]);
+        $this->middleware('permission:submit proof pengajuan', ['only' => ['submitProofForm', 'submitProof']]);
+        $this->middleware('permission:final approve pengajuan', ['only' => ['finalApprove']]);
+        $this->middleware('permission:final reject pengajuan', ['only' => ['finalReject']]);
+    }
+
     public function index(Request $request)
     {
         $query = AssetRequest::query()->with(['user', 'room']);

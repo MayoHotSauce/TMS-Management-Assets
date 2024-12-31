@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:view categories', ['only' => ['index']]);
+        $this->middleware('permission:create category', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit category', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete category', ['only' => ['destroy']]);
+    }
+
     public function index()
     {
         $categories = Category::latest()->get();

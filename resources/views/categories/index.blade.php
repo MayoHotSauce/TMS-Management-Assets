@@ -3,32 +3,19 @@
 @section('title', 'Categories Management')
 
 @section('content_header')
-    <div class="row mb-2">
-        <div class="col-sm-6">
-            <h1>Categories Management</h1>
-        </div>
-        <div class="col-sm-6">
-            <a href="{{ route('categories.create') }}" class="btn btn-primary float-right">Create New Category</a>
-        </div>
+    <div class="d-flex justify-content-between">
+        <h1>Categories Management</h1>
+        @can('create category')
+            <a href="{{ route('categories.create') }}" class="btn btn-primary">Create New Category</a>
+        @endcan
     </div>
 @stop
 
 @section('content')
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Categories List</h3>
-        </div>
-        <div class="card-body">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            <table class="table table-bordered table-striped">
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -44,18 +31,32 @@
                             <td>{{ $category->id }}</td>
                             <td>{{ $category->name }}</td>
                             <td>{{ $category->description }}</td>
-                            <td>{{ $category->created_at ? $category->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
+                            <td>{{ $category->created_at }}</td>
                             <td>
-                                <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="d-inline">
-                                    <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <div class="btn-group">
+                                    @can('edit category')
+                                        <a href="{{ route('categories.edit', $category) }}" 
+                                           class="btn btn-sm btn-warning" 
+                                           title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endcan
+
+                                    @can('delete category')
+                                        <form action="{{ route('categories.destroy', $category) }}" 
+                                              method="POST" 
+                                              onsubmit="return confirm('Are you sure?');"
+                                              class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-danger" 
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -63,4 +64,5 @@
             </table>
         </div>
     </div>
+</div>
 @stop

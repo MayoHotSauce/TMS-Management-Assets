@@ -2,13 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Asset;
+use App\Models\Barang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\ActivityLogger;
 
 class BarangController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:view assets', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create asset', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit asset', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete asset', ['only' => ['destroy']]);
+        $this->middleware('permission:change asset status', ['only' => ['changeStatus']]);
+        $this->middleware('permission:print asset label', ['only' => ['printLabel']]);
+        $this->middleware('permission:update company logo', ['only' => ['updateLogo']]);
+    }
+
     public function index()
     {
         // Get maintenance counts
@@ -31,14 +43,17 @@ class BarangController extends Controller
         return view('barang.index', compact('barang'));
     }
 
-    public function changeStatus(Request $request, $id)
+    public function changeStatus(Request $request, Barang $barang)
     {
+        if (!auth()->user()->can('change asset status')) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
         $request->validate([
             'status' => 'required|in:siap_dipakai,sedang_dipakai,dalam_perbaikan,rusak,siap_dipinjam,sedang_dipinjam,dimusnahkan'
         ]);
 
         try {
-            $barang = Asset::findOrFail($id);
             $barang->status = $request->status;
             $barang->save();
 
@@ -48,5 +63,13 @@ class BarangController extends Controller
             return redirect()->route('barang.index')
                 ->with('error', 'Gagal mengubah status asset: ' . $e->getMessage());
         }
+    }
+
+    public function updateLogo(Request $request)
+    {
+        if (!auth()->user()->can('update company logo')) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+        // ... kode update logo ...
     }
 }

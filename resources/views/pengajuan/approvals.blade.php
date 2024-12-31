@@ -46,23 +46,31 @@
                             <td>{{ $request->created_at->format('d/m/Y H:i') }}</td>
                             <td>
                                 <div class="btn-group" style="gap: 5px;">
-                                    <a href="{{ route('pengajuan.show', $request->id) }}" 
-                                       class="btn btn-info btn-sm"
-                                       title="Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-success btn-sm approve-btn"
-                                            data-request-id="{{ $request->id }}"
-                                            title="Setujui">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="button" 
-                                            class="btn btn-danger btn-sm reject-btn" 
-                                            data-request-id="{{ $request->id }}"
-                                            title="Tolak">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    @can('view pengajuan')
+                                        <a href="{{ route('pengajuan.show', $request->id) }}" 
+                                           class="btn btn-info btn-sm"
+                                           title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    @endcan
+
+                                    @can('approve pengajuan')
+                                        <button type="button" 
+                                                class="btn btn-success btn-sm approve-btn"
+                                                data-request-id="{{ $request->id }}"
+                                                title="Setujui">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    @endcan
+
+                                    @can('reject pengajuan')
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm reject-btn" 
+                                                data-request-id="{{ $request->id }}"
+                                                title="Tolak">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -119,23 +127,31 @@
                             </td>
                             <td>
                                 <div class="btn-group" style="gap: 5px;">
-                                    <a href="{{ route('pengajuan.show', $request->id) }}" 
-                                       class="btn btn-info btn-sm"
-                                       title="Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-success btn-sm final-approve-btn"
-                                            data-request-id="{{ $request->id }}"
-                                            title="Setujui Final">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="button" 
-                                            class="btn btn-danger btn-sm final-reject-btn" 
-                                            data-request-id="{{ $request->id }}"
-                                            title="Tolak Final">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    @can('view pengajuan')
+                                        <a href="{{ route('pengajuan.show', $request->id) }}" 
+                                           class="btn btn-info btn-sm"
+                                           title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    @endcan
+
+                                    @can('final approve pengajuan')
+                                        <button type="button" 
+                                                class="btn btn-success btn-sm final-approve-btn"
+                                                data-request-id="{{ $request->id }}"
+                                                title="Setujui Final">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    @endcan
+
+                                    @can('final reject pengajuan')
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm final-reject-btn" 
+                                                data-request-id="{{ $request->id }}"
+                                                title="Tolak Final">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

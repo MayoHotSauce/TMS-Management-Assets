@@ -10,6 +10,19 @@ use App\Models\ActivityLogger;
 
 class MaintenanceController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Tambahkan middleware permission
+        $this->middleware('permission:view maintenances', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create maintenance', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit maintenance', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete maintenance', ['only' => ['destroy']]);
+        $this->middleware('permission:approve maintenance', ['only' => ['approve', 'approvalList', 'showApprovalDetail']]);
+        $this->middleware('permission:revise maintenance', ['only' => ['reject']]);
+        $this->middleware('permission:complete maintenance', ['only' => ['showCompletionForm', 'complete']]);
+    }
+
     public function index(Request $request)
     {
         $status = $request->get('status', 'active');

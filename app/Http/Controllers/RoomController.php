@@ -8,6 +8,16 @@ use App\Services\ActivityLogger;
 
 class RoomController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:view rooms', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create room', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit room', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete room', ['only' => ['destroy']]);
+        $this->middleware('permission:view room assets', ['only' => ['show']]);
+    }
+
     public function index()
     {
         $rooms = Room::latest()->get();

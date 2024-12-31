@@ -14,6 +14,9 @@ use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PengajuanController;
 use App\Http\Controllers\BarangController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,11 +29,10 @@ use App\Http\Controllers\BarangController;
 |
 */
 
+// Root redirect
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('login');
 });
-
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -38,7 +40,7 @@ Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 // Protected Routes
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'check.jabatan'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class);
     Route::resource('rooms', RoomController::class);
@@ -232,3 +234,29 @@ Route::post('/pengajuan/{pengajuan}/final-reject', [PengajuanController::class, 
 
 Route::put('/barang/{barang}/change-status', [App\Http\Controllers\BarangController::class, 'changeStatus'])
     ->name('barang.change-status');
+
+// User Management Routes
+Route::middleware(['auth', 'check.jabatan'])->group(function () {
+    Route::resource('users', UserController::class);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('roles', RoleController::class);
+    Route::resource('permissions', PermissionController::class);
+    
+    // Update user roles
+    Route::post('/users/{user}/roles', [UserController::class, 'updateRoles'])
+        ->name('users.roles.update');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Categories routes with permissions
+    Route::group(['prefix' => 'categories', 'middleware' => ['can:view categories']], function () {
+        Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
+        Route::get('/create', [CategoryController::class, 'create'])->middleware('can:create category')->name('categories.create');
+        Route::post('/', [CategoryController::class, 'store'])->middleware('can:create category')->name('categories.store');
+        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->middleware('can:edit category')->name('categories.edit');
+        Route::put('/{category}', [CategoryController::class, 'update'])->middleware('can:edit category')->name('categories.update');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->middleware('can:delete category')->name('categories.destroy');
+    });
+});

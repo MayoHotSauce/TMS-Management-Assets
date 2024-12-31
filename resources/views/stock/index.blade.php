@@ -10,8 +10,12 @@
     <div class="d-flex justify-content-between mb-3">
         <h2>Asset List</h2>
         <div>
-            <button type="button" class="btn btn-primary" id="updateBtn">Update</button>
-            <button type="button" class="btn btn-success" id="confirmBtn">Konfirmasi</button>
+            @can('update stock')
+                <button type="button" class="btn btn-primary" id="updateBtn">Update</button>
+            @endcan
+            @can('confirm stock')
+                <button type="button" class="btn btn-success" id="confirmBtn">Konfirmasi</button>
+            @endcan
         </div>
     </div>
 

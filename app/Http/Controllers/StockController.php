@@ -14,6 +14,17 @@ use Carbon\Carbon;
 
 class StockController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:view stock', ['only' => ['index', 'show', 'list']]);
+        $this->middleware('permission:create stock check', ['only' => ['create', 'store']]);
+        $this->middleware('permission:update stock', ['only' => ['update']]);
+        $this->middleware('permission:confirm stock', ['only' => ['confirm']]);
+        $this->middleware('permission:download stock report', ['only' => ['downloadCsv']]);
+        $this->middleware('permission:view stock history', ['only' => ['history']]);
+    }
+
     public function index()
     {
         $currentCheck = StockCheck::where('created_by', auth()->id())

@@ -23,14 +23,14 @@
                     @csrf
 
                     <div class="input-group mb-3">
-                        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" 
-                               placeholder="Email" value="{{ old('email') }}" required autofocus>
+                        <input type="text" name="member_id" class="form-control @error('member_id') is-invalid @enderror" 
+                               placeholder="Member ID" value="{{ old('member_id') }}" required autofocus>
                         <div class="input-group-append">
                             <div class="input-group-text">
-                                <span class="fas fa-envelope"></span>
+                                <span class="fas fa-id-card"></span>
                             </div>
                         </div>
-                        @error('email')
+                        @error('member_id')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>
@@ -69,7 +69,7 @@
 
                 @if (Route::has('password.request'))
                     <p class="mb-1">
-                        <a href="{{ route('password.request') }}">I forgot my password</a>
+                        <a href="{{ route('password.request') }}">Lupa password?</a>
                     </p>
                 @endif
             </div>

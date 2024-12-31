@@ -2,43 +2,63 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use Notifiable, HasRoles;
+
+    protected $table = 'users';
+    
+    protected $primaryKey = 'id_user';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var array
      */
     protected $fillable = [
-        'name',
-        'email',
+        'member_id',
         'password',
+        'jabatan_id',
+        'divisi_id',
+        'status'
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * The attributes that should be hidden for arrays.
      *
-     * @var array<int, string>
+     * @var array
      */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id', 'id_member');
+    }
+
+    public function jabatan()
+    {
+        return $this->belongsTo(Jabatan::class, 'jabatan_id', 'id_jabatan');
+    }
+
+    public function divisi()
+    {
+        return $this->belongsTo(Divisi::class, 'divisi_id', 'id_divisi');
+    }
+
     /**
-     * The attributes that should be cast.
+     * Get the name of the unique identifier for the user.
      *
-     * @var array<string, string>
+     * @return string
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    public function getAuthIdentifierName()
+    {
+        return 'member_id';
+    }
 }

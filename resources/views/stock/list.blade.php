@@ -35,13 +35,17 @@
                         {{ $check->completed_at ? $check->completed_at->format('Y-m-d H:i') : 'Not completed' }}
                     </td>
                     <td>
-                        <a href="{{ route('stock.show', $check->id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        @if($check->status === 'completed')
-                            <a href="{{ route('stock.download.csv', $check->id) }}" class="btn btn-sm btn-success">
-                                <i class="fas fa-file-download"></i> CSV
+                        @can('view stock')
+                            <a href="{{ route('stock.show', $check->id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> View
                             </a>
+                        @endcan
+                        @if($check->status === 'completed')
+                            @can('download stock report')
+                                <a href="{{ route('stock.download.csv', $check->id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-file-download"></i> CSV
+                                </a>
+                            @endcan
                         @endif
                     </td>
                 </tr>

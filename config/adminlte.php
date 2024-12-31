@@ -322,8 +322,9 @@ return [
         ],
         [
             'text' => 'Kategori',
+            'icon' => 'fas fa-list',
             'url'  => 'categories',
-            'icon' => 'fas fa-list'
+            'can'  => 'view categories',
         ],
         [
             'text' => 'Ruangan',
@@ -395,8 +396,24 @@ return [
         ],
         [
             'text' => 'Role Perm',
-            'url'  => '#',
-            'icon' => 'fas fa-cog'
+            'icon' => 'fas fa-cog',
+            'submenu' => [
+                [
+                    'text' => 'Users',
+                    'url'  => 'users',
+                    'icon' => 'fas fa-users'
+                ],
+                [
+                    'text' => 'Roles',
+                    'url'  => 'roles',
+                    'icon' => 'fas fa-user-tag'
+                ],
+                [
+                    'text' => 'Permissions',
+                    'url'  => 'permissions',
+                    'icon' => 'fas fa-key'
+                ],
+            ],
         ],
     ],
     /*
@@ -480,12 +497,12 @@ return [
             ],
         ],
         'Sweetalert2' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11',
                 ],
             ],
         ],

@@ -8,7 +8,9 @@
             <h1>Rooms Management</h1>
         </div>
         <div class="col-sm-6">
-            <a href="{{ route('rooms.create') }}" class="btn btn-primary float-right">Create New Room</a>
+            @can('create room')
+                <a href="{{ route('rooms.create') }}" class="btn btn-primary float-right">Create New Room</a>
+            @endcan
         </div>
     </div>
 @stop
@@ -56,16 +58,29 @@
                             <td>{{ $room->capacity }}</td>
                             <td>{{ $room->responsible_person }}</td>
                             <td>
-                                <form action="{{ route('rooms.destroy', $room->id) }}" method="POST" class="d-inline">
-                                    <a href="{{ route('rooms.edit', $room->id) }}" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <div class="btn-group">
+                                    @can('edit room')
+                                        <a href="{{ route('rooms.edit', $room->id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endcan
+
+                                    @can('delete room')
+                                        <form action="{{ route('rooms.destroy', $room->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
+
+                                    @can('view room assets')
+                                        <a href="{{ route('rooms.show', $room->id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach

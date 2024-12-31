@@ -5,9 +5,11 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <h1>Daftar Maintenance</h1>
-        <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Buat Maintenance
-        </a>
+        @can('create maintenance')
+            <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Buat Maintenance
+            </a>
+        @endcan
     </div>
 @stop
 
@@ -85,27 +87,33 @@
                                 <td>{{ $maintenance->created_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <div class="d-flex align-items-center" style="gap: 10px;">
-                                        <a href="{{ route('maintenance.show', $maintenance->id) }}" 
-                                           class="btn btn-info btn-sm" 
-                                           title="Detail">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                        @can('view maintenances')
+                                            <a href="{{ route('maintenance.show', $maintenance->id) }}" 
+                                               class="btn btn-info btn-sm" 
+                                               title="Detail">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        @endcan
 
                                         @if($maintenance->status === 'archived')
-                                            <button type="button" 
-                                                    class="btn btn-primary btn-sm" 
-                                                    onclick="confirmRestart({{ $maintenance->id }})"
-                                                    title="Kerjakan Ulang">
-                                                <i class="fas fa-redo"></i>
-                                            </button>
+                                            @can('restart maintenance')
+                                                <button type="button" 
+                                                        class="btn btn-primary btn-sm" 
+                                                        onclick="confirmRestart({{ $maintenance->id }})"
+                                                        title="Kerjakan Ulang">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            @endcan
                                         @endif
 
                                         @if($maintenance->status === 'in_progress')
-                                            <a href="{{ route('maintenance.completion-form', $maintenance->id) }}" 
-                                               class="btn btn-success btn-sm"
-                                               title="Form Penyelesaian">
-                                                <i class="fas fa-check"></i>
-                                            </a>
+                                            @can('complete maintenance')
+                                                <a href="{{ route('maintenance.completion-form', $maintenance->id) }}" 
+                                                   class="btn btn-success btn-sm"
+                                                   title="Form Penyelesaian">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                            @endcan
                                         @endif
                                     </div>
                                 </td>
