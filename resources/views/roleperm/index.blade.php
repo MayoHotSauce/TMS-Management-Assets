@@ -1,239 +1,216 @@
 @extends('adminlte::page')
 
-@section('title', 'Manajemen Peran & Izin')
+@section('title', 'Role Permissions')
+
+@section('content_header')
+<div class="d-flex justify-content-between">
+    <h1>Daftar Jabatan dan Akses</h1>
+    <button class="btn btn-primary" data-toggle="modal" data-target="#addRoleModal">
+        <i class="fas fa-plus"></i> Tambah Izin Akses
+    </button>
+</div>
+@stop
 
 @section('content')
 <div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Daftar Jabatan</h3>
-        <div class="card-tools">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addRoleModal">
-                <i class="fas fa-plus"></i> Tambah Izin Akses
-            </button>
-        </div>
-    </div>
     <div class="card-body">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Nama Jabatan</th>
-                    <th>Level Akses</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($jabatans as $jabatan)
-                    <tr>
-                        <td>{{ $jabatan->nama }}</td>
-                        <td>
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#userAccess">Akses User</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#jabatanAccess">Akses Jabatan</a>
+            </li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content pt-3">
+            <!-- User Access Tab -->
+            <div class="tab-pane active" id="userAccess">
+                <div class="form-group">
+                    <label>Filter User:</label>
+                    <input type="text" class="form-control" id="searchUser" placeholder="Cari username atau nama...">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Username / Nama</th>
+                                <th>Level Akses</th>
+                                <th width="100">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($userRoles as $role)
                             @php
-                                $roleName = 'jabatan_' . $jabatan->id_jabatan;
-                                $role = \Spatie\Permission\Models\Role::where('name', $roleName)->first();
-                                $level = $role ? substr($role->name, -1) : 'Tidak ada izin';
+                                // Parse role name untuk mendapatkan user ID dan level
+                                preg_match('/user_(\d+)_level_(\d+)/', $role->name, $matches);
+                                $userId = $matches[1] ?? null;
+                                $level = $matches[2] ?? null;
+                                
+                                // Cari user berdasarkan ID
+                                $user = $users->firstWhere('id_user', $userId);
+                                $userName = $user ? ($user->member->nama ?? 'User #' . $userId) : 'User #' . $userId;
                             @endphp
-                            @if($level === 'Tidak ada izin')
-                                <span class="badge badge-secondary">{{ $level }}</span>
-                            @else
-                                <span class="badge badge-info">Level {{ $level }}</span>
-                            @endif
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-warning btn-sm" 
-                                    onclick="editAccess('{{ $jabatan->id_jabatan }}', '{{ $jabatan->nama }}')">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+                            <tr class="user-role-row">
+                                <td class="user-name">{{ $userName }}</td>
+                                <td>
+                                    @if($level == 1)
+                                        <span class="badge badge-info">Level 1: Hanya lihat</span>
+                                    @elseif($level == 2)
+                                        <span class="badge badge-warning">Level 2: Lihat dan edit</span>
+                                    @elseif($level == 3)
+                                        <span class="badge badge-success">Level 3: Akses penuh</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-warning edit-level" 
+                                                data-role-id="{{ $role->id }}"
+                                                data-current-level="{{ $level }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger delete-role" 
+                                                data-role-id="{{ $role->id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center">Belum ada data akses user</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Jabatan Access Tab -->
+            <div class="tab-pane fade" id="jabatanAccess">
+                <!-- Similar structure as user access but for jabatan -->
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Add Role Modal -->
-<div class="modal fade" id="addRoleModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Tambah Izin Akses</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form action="{{ route('roleperm.assign') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Pilih Tipe</label>
-                        <select name="permission_type" class="form-control" required>
-                            <option value="jabatan">Untuk Jabatan</option>
-                            <option value="specific">Untuk User Spesifik</option>
-                        </select>
-                    </div>
+@include('roleperm.modal')
 
-                    <div class="form-group jabatan-select">
-                        <label>Pilih Jabatan</label>
-                        <select name="jabatan_id" class="form-control">
-                            <option value="">Pilih Jabatan</option>
-                            @foreach($jabatans as $jabatan)
-                                <option value="{{ $jabatan->id_jabatan }}">{{ $jabatan->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+@stop
 
-                    <div class="form-group">
-                        <label>Level Akses</label>
-                        <select name="access_level" class="form-control" required>
-                            <option value="">Pilih Level</option>
-                            <option value="1">Level 1 - Hanya melihat data</option>
-                            <option value="2">Level 2 - Dapat membuat dan mengedit</option>
-                            <option value="3">Level 3 - Akses penuh termasuk hapus dan approval</option>
-                        </select>
-                        <small class="text-muted">
-                            Level 1: Hanya melihat data<br>
-                            Level 2: Dapat membuat dan mengedit<br>
-                            Level 3: Akses penuh termasuk hapus dan approval
-                        </small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@push('css')
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
+@endpush
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 <script>
 $(document).ready(function() {
-    $('select[name="permission_type"]').change(function() {
-        const type = $(this).val();
-        if (type === 'jabatan') {
-            $('.jabatan-select').show();
-            $('.user-select').hide();
-        } else {
-            $('.jabatan-select').hide();
-            $('.user-select').show();
-        }
+    // Live search untuk user
+    $('#searchUser').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        $('.user-role-row').each(function() {
+            const userName = $(this).find('.user-name').text().toLowerCase();
+            $(this).toggle(userName.includes(searchText));
+        });
+    });
+
+    // Handler untuk edit level
+    $('.edit-level').on('click', function() {
+        const roleId = $(this).data('role-id');
+        const currentLevel = $(this).data('current-level');
+        
+        Swal.fire({
+            title: 'Ubah Level Akses',
+            input: 'select',
+            inputOptions: {
+                '1': 'Level 1: Hanya lihat',
+                '2': 'Level 2: Lihat dan edit',
+                '3': 'Level 3: Akses penuh'
+            },
+            inputValue: currentLevel,
+            showCancelButton: true,
+            confirmButtonText: 'Simpan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/role-permissions/${roleId}/level`,
+                    type: 'PUT',
+                    data: { level: result.value },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Gagal mengubah level akses!'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // Handler untuk delete
+    $('.delete-role').on('click', function() {
+        const roleId = $(this).data('role-id');
+        
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Akses ini akan dihapus permanen!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/role-permissions/${roleId}`,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Gagal menghapus akses!'
+                        });
+                    }
+                });
+            }
+        });
     });
 });
-
-function editAccess(jabatanId, jabatanName) {
-    $('#addRoleModal').modal('show');
-    $('select[name="jabatan_id"]').val(jabatanId);
-    $('select[name="permission_type"]').val('jabatan').trigger('change');
-}
 </script>
-@endpush
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="//cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-@stop
-
-@section('js')
-    <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script>
-    $(document).ready(function() {
-        // Initialize DataTable with check
-        if ($.fn.DataTable) {
-            $('.table').DataTable();
-            console.log('DataTable initialized');
-        } else {
-            console.error('DataTable plugin not found');
-        }
-
-        // Debug initial state
-        console.log('jQuery version:', $.fn.jquery);
-        console.log('Initial permission type:', $('#permissionType').val());
-        console.log('Initial jabatan:', $('#jabatanSelect').val());
-
-        // Permission type change handler
-        $('#permissionType').on('change', function() {
-            var selectedValue = $(this).val();
-            console.log('Permission type changed to:', selectedValue);
-            
-            if (selectedValue === 'specific') {
-                var jabatanValue = $('#jabatanSelect').val();
-                $('#userSelect').show();
-                
-                if (jabatanValue) {
-                    loadUsers(jabatanValue);
-                } else {
-                    console.log('Please select a jabatan first');
-                }
-            } else {
-                $('#userSelect').hide();
-            }
-        });
-
-        // Jabatan change handler
-        $('#jabatanSelect').on('change', function() {
-            var jabatanValue = $(this).val();
-            console.log('Jabatan changed to:', jabatanValue);
-            
-            if ($('#permissionType').val() === 'specific') {
-                loadUsers(jabatanValue);
-            }
-        });
-
-        // Load users function
-        function loadUsers(jabatanId) {
-            if (!jabatanId) {
-                console.log('No jabatan ID provided');
-                return;
-            }
-
-            console.log('Loading users for jabatan:', jabatanId);
-            
-            $.ajax({
-                url: '/get-users-by-jabatan/' + jabatanId,
-                type: 'GET',
-                beforeSend: function() {
-                    $('#userDropdown').prop('disabled', true);
-                    console.log('Loading users...');
-                },
-                success: function(response) {
-                    var dropdown = $('#userDropdown');
-                    
-                    if (!dropdown.length) {
-                        console.error('User dropdown not found');
-                        return;
-                    }
-                    
-                    dropdown.empty().prop('disabled', false);
-                    dropdown.append('<option value="">Pilih Pengguna</option>');
-                    
-                    if (response.users && response.users.length > 0) {
-                        console.log('Found', response.users.length, 'users');
-                        $.each(response.users, function(key, user) {
-                            var userName = user.member ? user.member.nama : 'N/A';
-                            dropdown.append(
-                                $('<option></option>')
-                                    .val(user.id_user)
-                                    .text(userName)
-                            );
-                        });
-                    } else {
-                        dropdown.append('<option value="">Tidak ada pengguna</option>');
-                        console.log('No users found for this jabatan');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', {
-                        status: status,
-                        error: error,
-                        response: xhr.responseText
-                    });
-                    $('#userDropdown')
-                        .empty()
-                        .prop('disabled', false)
-                        .append('<option value="">Error loading users</option>');
-                }
-            });
-        }
-    });
-    </script>
-@stop 
+@endpush 

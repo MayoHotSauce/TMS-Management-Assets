@@ -15,4 +15,9 @@ class Member extends Model
         'nik',
         // ... other fillable fields
     ];
+
+    public function jabatan()
+    {
+        return $this->belongsTo(Jabatan::class, 'id_jabatan');
+    }
 } 

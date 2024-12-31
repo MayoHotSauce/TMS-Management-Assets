@@ -198,9 +198,9 @@ return [
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
     'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-white navbar-light',
-    'classes_topnav_nav' => 'navbar-expand',
-    'classes_topnav_container' => 'container',
+    'classes_topnav' => '',
+    'classes_topnav_nav' => '',
+    'classes_topnav_container' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -300,6 +300,7 @@ return [
 
     'menu' => [
         // Navbar items:
+        /*
         [
             'type' => 'navbar-search',
             'text' => 'search',
@@ -309,6 +310,7 @@ return [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
+        */
 
         // Sidebar items:
         [

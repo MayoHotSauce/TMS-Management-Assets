@@ -251,3 +251,17 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/role-permissions', [RolePermController::class, 'index'])->name('roleperm.index');
     Route::post('/role-permissions/assign', [RolePermController::class, 'assign'])->name('roleperm.assign');
 });
+
+Route::group(['middleware' => ['auth']], function () {
+    Route::get('/roleperm', [RolePermController::class, 'index'])->name('roleperm.index');
+    Route::post('/roleperm/assign', [RolePermController::class, 'assign'])->name('roleperm.assign');
+    Route::put('/roleperm/{id}', [RolePermController::class, 'update'])->name('roleperm.update');
+});
+
+Route::get('/get-all-users', [RolePermController::class, 'getAllUsers'])->name('users.all');
+
+Route::get('/role-permissions/users/{jabatan}', [RolePermController::class, 'getUsersByJabatan'])
+     ->name('roleperm.users');
+
+Route::delete('/role-permissions/{id}', [RolePermController::class, 'destroy'])->name('roleperm.destroy');
+Route::put('/role-permissions/{id}/level', [RolePermController::class, 'updateLevel'])->name('roleperm.updateLevel');
