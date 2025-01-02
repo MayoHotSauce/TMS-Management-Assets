@@ -223,4 +223,11 @@ class StockController extends Controller
         
         return view('stock.show', compact('stockCheck', 'allAssets'));
     }
+
+    public function store(Request $request)
+    {
+        $stockCheck = new StockCheck();
+        $stockCheck->created_by = auth()->id(); // atau user_id, sesuaikan dengan nama kolom
+        $stockCheck->save();
+    }
 }

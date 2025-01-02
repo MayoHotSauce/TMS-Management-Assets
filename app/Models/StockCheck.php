@@ -23,7 +23,8 @@ class StockCheck extends Model
 
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by', 'id_user')
+                    ->with('member');
     }
 
     public function items()

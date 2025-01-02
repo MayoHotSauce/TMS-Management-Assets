@@ -21,6 +21,51 @@
             </div>
         @endif
 
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <form action="{{ route('users.index') }}" method="GET" class="form-inline">
+                    <div class="form-group mx-1">
+                        <input type="text" 
+                               name="search" 
+                               class="form-control form-control-sm" 
+                               placeholder="Cari nama/member ID..."
+                               value="{{ request('search') }}">
+                    </div>
+                    <div class="form-group mx-1">
+                        <select name="divisi" class="form-control form-control-sm">
+                            <option value="">Semua Divisi</option>
+                            @foreach($divisis as $divisi)
+                                <option value="{{ $divisi->id_divisi }}" 
+                                    {{ request('divisi') == $divisi->id_divisi ? 'selected' : '' }}>
+                                    {{ $divisi->nama }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mx-1">
+                        <select name="jabatan" class="form-control form-control-sm">
+                            <option value="">Semua Jabatan</option>
+                            @foreach($jabatans as $jabatan)
+                                <option value="{{ $jabatan->id_jabatan }}"
+                                    {{ request('jabatan') == $jabatan->id_jabatan ? 'selected' : '' }}>
+                                    {{ $jabatan->nama }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mx-1">
+                        <select name="status" class="form-control form-control-sm">
+                            <option value="">Semua Status</option>
+                            <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                            <option value="tidak_aktif" {{ request('status') == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary mx-1">Filter</button>
+                    <a href="{{ route('users.index') }}" class="btn btn-sm btn-secondary">Reset</a>
+                </form>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -157,6 +202,29 @@
     .role-options {
         max-height: 200px;
         overflow-y: auto;
+    }
+    .form-inline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .form-inline .form-group {
+        flex-grow: 1;
+        min-width: 200px;
+    }
+    
+    @media (max-width: 768px) {
+        .form-inline .form-group {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .form-inline button,
+        .form-inline a {
+            width: 100%;
+            margin: 5px 0;
+        }
     }
 </style>
 @stop

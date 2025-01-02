@@ -22,7 +22,7 @@
             <tbody>
                 @foreach($stockChecks as $check)
                 <tr>
-                    <td>{{ $check->creator->name ?? 'N/A' }}</td>
+                    <td>{{ $check->creator->member->nama ?? 'N/A' }}</td>
                     <td>
                         <span class="badge badge-{{ $check->status === 'completed' ? 'success' : 'warning' }}">
                             {{ ucfirst($check->status) }}

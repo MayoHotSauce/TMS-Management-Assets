@@ -21,15 +21,43 @@ class UserController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['member', 'jabatan', 'divisi', 'roles'])
-            ->orderBy('member_id')
-            ->paginate(10);
-        
+        $query = User::query()
+            ->with(['member', 'jabatan', 'divisi']);
+
+        // Filter berdasarkan pencarian nama atau member_id
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('member_id', 'like', "%{$search}%")
+                  ->orWhereHas('member', function($q) use ($search) {
+                      $q->where('nama', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter berdasarkan divisi
+        if ($request->filled('divisi')) {
+            $query->where('divisi_id', $request->divisi);
+        }
+
+        // Filter berdasarkan jabatan
+        if ($request->filled('jabatan')) {
+            $query->where('jabatan_id', $request->jabatan);
+        }
+
+        // Filter berdasarkan status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $users = $query->paginate(10)->withQueryString();
         $roles = Role::all();
-        
-        return view('users.index', compact('users', 'roles'));
+        $divisis = Divisi::all();
+        $jabatans = Jabatan::all();
+
+        return view('users.index', compact('users', 'roles', 'divisis', 'jabatans'));
     }
 
     public function create()
@@ -147,9 +175,13 @@ class UserController extends Controller
                 'roles.*' => 'string|exists:roles,name'
             ]);
 
-            // Cek jika mencoba menghapus role admin dari user admin lain
-            if ($user->hasRole('admin') && !in_array('admin', $validated['roles'])) {
-                throw new \Exception('Tidak dapat menghapus role admin dari user admin');
+            // Modifikasi logika pengecekan:
+            // 1. Jika target user punya role owner, hanya owner yang bisa mengubah
+            // 2. Jika target user punya role admin (tapi bukan owner), admin/owner bisa mengubah
+            if ($user->hasRole('owner')) {
+                if (!Auth::user()->hasRole('owner')) {
+                    throw new \Exception('Hanya Owner yang dapat mengubah role Owner');
+                }
             }
 
             // Sync roles
