@@ -3,14 +3,20 @@
 @section('title', 'Daftar Pengajuan Asset')
 
 @section('content_header')
-    <div class="d-flex justify-content-between align-items-center">
-        <h1>Daftar Pengajuan Asset</h1>
-        @can('create pengajuan')
-            <a href="{{ route('pengajuan.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Buat Pengajuan
-            </a>
-        @endcan
-    </div>
+    @can('view pengajuan')
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>Daftar Pengajuan Asset</h1>
+            @can('create pengajuan')
+                <a href="{{ route('pengajuan.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Buat Pengajuan
+                </a>
+            @endcan
+        </div>
+    @else
+        <div class="alert alert-danger">
+            Anda tidak memiliki akses untuk melihat halaman ini.
+        </div>
+    @endcan
 @stop
 
 @section('content')

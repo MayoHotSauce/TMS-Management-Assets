@@ -41,8 +41,10 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (Throwable $e) {
+            if ($e instanceof \Spatie\Permission\Exceptions\UnauthorizedException) {
+                return response()->view('errors.403', [], 403);
+            }
         });
     }
 }

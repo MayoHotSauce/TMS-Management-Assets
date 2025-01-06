@@ -329,89 +329,106 @@ return [
         [
             'text' => 'Ruangan',
             'url'  => 'rooms',
-            'icon' => 'fas fa-door-open'
+            'icon' => 'fas fa-door-open',
+            'can'  => 'view rooms'
         ],
         [
             'text' => 'Daftar Barang',
             'url'  => 'barang',
-            'icon' => 'fas fa-boxes'
+            'icon' => 'fas fa-boxes',
+            'can'  => 'view assets'
         ],
         [
             'text' => 'Perbaikan',
             'icon' => 'fas fa-tools',
+            'can'  => 'view maintenances',
             'submenu' => [
                 [
                     'text' => 'Daftar Perbaikan',
                     'url'  => 'maintenance',
-                    'icon' => 'fas fa-list'
+                    'icon' => 'fas fa-list',
+                    'can'  => 'view maintenances'
                 ],
                 [
                     'text' => 'Approval Perbaikan',
                     'url'  => 'maintenance/approvals',
-                    'icon' => 'fas fa-check-circle'
+                    'icon' => 'fas fa-check-circle',
+                    'can'  => ['approve maintenance', 'complete maintenance']
                 ],
             ],
         ],
         [
             'text' => 'Pengajuan Asset',
             'icon' => 'fas fa-file-invoice',
+            'can'  => 'view pengajuan',
             'submenu' => [
                 [
                     'text' => 'Daftar Pengajuan',
                     'url'  => 'pengajuan',
                     'icon' => 'fas fa-list',
+                    'can'  => 'view pengajuan'
                 ],
                 [
                     'text' => 'Buat Pengajuan',
                     'url'  => 'pengajuan/create',
                     'icon' => 'fas fa-plus',
+                    'can'  => 'create pengajuan'
                 ],
                 [
                     'text' => 'Approval Pengajuan',
                     'url'  => 'pengajuan/approvals',
                     'icon' => 'fas fa-check-circle',
+                    'can'  => ['approve pengajuan', 'final approve pengajuan']
                 ],
             ],
         ],
         [
             'text' => 'History',
             'url'  => 'history',
-            'icon' => 'fas fa-history'
+            'icon' => 'fas fa-history',
+            'can'  => 'view history'
         ],
         [
             'text' => 'Stock Of Name',
             'icon' => 'fas fa-box',
+            'can'  => 'view stock',
             'submenu' => [
                 [
                     'text' => 'Pengecekan Asset',
                     'url'  => 'stock',
-                    'icon' => 'fas fa-clipboard-check'
+                    'icon' => 'fas fa-clipboard-check',
+                    'can'  => 'create stock check'
                 ],
                 [
                     'text' => 'List Pengecekan Asset',
                     'url'  => 'stock/list',
-                    'icon' => 'fas fa-list'
+                    'icon' => 'fas fa-list',
+                    'can'  => 'view stock'
                 ],
             ],
         ],
         [
             'text' => 'Role Perm',
             'icon' => 'fas fa-cog',
+            'can'  => 'manage roles',
             'submenu' => [
                 [
                     'text' => 'Users',
                     'url'  => 'users',
-                    'icon' => 'fas fa-users'
+                    'icon' => 'fas fa-users',
+                    'can'  => 'manage users'
                 ],
                 [
                     'text' => 'Roles',
                     'url'  => 'roles',
-                    'icon' => 'fas fa-user-tag'
+                    'icon' => 'fas fa-user-tag',
+                    'can'  => 'manage roles'
                 ],
                 [
                     'text' => 'Permissions',
                     'url'  => 'permissions',
-                    'icon' => 'fas fa-key'
+                    'icon' => 'fas fa-key',
+                    'can'  => 'manage permissions'
                 ],
             ],
         ],

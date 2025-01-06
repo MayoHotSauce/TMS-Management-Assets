@@ -16,15 +16,13 @@ class PengajuanController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:view pengajuan', ['only' => ['index', 'show']]);
-        $this->middleware('permission:create pengajuan', ['only' => ['create', 'store']]);
-        $this->middleware('permission:edit pengajuan', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete pengajuan', ['only' => ['destroy']]);
-        $this->middleware('permission:approve pengajuan', ['only' => ['approve']]);
-        $this->middleware('permission:reject pengajuan', ['only' => ['reject']]);
-        $this->middleware('permission:submit proof pengajuan', ['only' => ['submitProofForm', 'submitProof']]);
-        $this->middleware('permission:final approve pengajuan', ['only' => ['finalApprove']]);
-        $this->middleware('permission:final reject pengajuan', ['only' => ['finalReject']]);
+        $this->middleware('permission:view pengajuan|manage all pengajuan', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create pengajuan|manage all pengajuan', ['only' => ['create', 'store']]);
+        $this->middleware('permission:submit proof pengajuan|manage all pengajuan', ['only' => ['submitProof', 'submitProofForm']]);
+        $this->middleware('permission:approve pengajuan|manage all pengajuan', ['only' => ['approve', 'approvalList']]);
+        $this->middleware('permission:reject pengajuan|manage all pengajuan', ['only' => ['reject']]);
+        $this->middleware('permission:final approve pengajuan|manage all pengajuan', ['only' => ['finalApprove']]);
+        $this->middleware('permission:final reject pengajuan|manage all pengajuan', ['only' => ['finalReject']]);
     }
 
     public function index(Request $request)
