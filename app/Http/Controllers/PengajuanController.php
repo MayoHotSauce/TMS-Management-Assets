@@ -57,8 +57,9 @@ class PengajuanController extends Controller
         $categories = Category::pluck('name', 'id');
         $rooms = Room::all();
         
-        // Get all users instead of filtering by role
-        $users = User::pluck('email', 'id');
+        // Mengambil nama dari tabel members melalui relasi dengan users
+        $users = User::join('members', 'users.member_id', '=', 'members.id_member')
+            ->pluck('members.nama', 'users.id_user');
         
         return view('pengajuan.create', compact('categories', 'rooms', 'users'));
     }
@@ -73,6 +74,11 @@ class PengajuanController extends Controller
             'description' => 'nullable|string|max:1000'
         ]);
 
+        // Ambil nama dari tabel members melalui relasi
+        $userName = User::join('members', 'users.member_id', '=', 'members.id_member')
+            ->where('users.id_user', auth()->id())
+            ->value('members.nama');
+
         $assetRequest = new AssetRequest();
         $assetRequest->name = $validated['name'];
         $assetRequest->category = Category::find($validated['category_id'])->name;
@@ -80,7 +86,7 @@ class PengajuanController extends Controller
         $assetRequest->price = $validated['price'];
         $assetRequest->description = $request->description ?: null;
         $assetRequest->user_id = auth()->id();
-        $assetRequest->requester_email = auth()->user()->email;
+        $assetRequest->requester_email = $userName;  // Menggunakan nama dari members
         $assetRequest->status = 'pending';
         $assetRequest->save();
 

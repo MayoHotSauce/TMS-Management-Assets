@@ -49,7 +49,13 @@
                         @foreach($activities as $activity)
                             <tr>
                                 <td>{{ $activity->created_at }}</td>
-                                <td>{{ $activity->user->name }}</td>
+                                <td>
+                                    @if($activity->user && $activity->user->member)
+                                        {{ $activity->user->member->nama }}
+                                    @else
+                                        User tidak ditemukan
+                                    @endif
+                                </td>
                                 <td>{{ $activity->module }}</td>
                                 <td>{{ $activity->action }}</td>
                                 <td>{{ $activity->description }}</td>

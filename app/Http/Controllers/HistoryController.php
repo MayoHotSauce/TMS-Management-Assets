@@ -9,7 +9,7 @@ class HistoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ActivityLog::with('user')->latest();
+        $query = ActivityLog::with(['user.member'])->latest();
 
         // Filter by module if specified
         if ($request->has('module') && $request->module !== '') {
