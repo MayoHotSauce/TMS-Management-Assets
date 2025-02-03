@@ -89,7 +89,7 @@ class PengajuanController extends Controller
         $assetRequest->save();
 
         ActivityLogger::log(
-            'create',
+            'create',   
             'asset_request',
             'Created new asset request: ' . $assetRequest->name
         );

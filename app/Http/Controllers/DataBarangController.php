@@ -8,7 +8,6 @@ use App\Models\BarangSequence;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\ActivityLogger;
 
 class DataBarangController extends Controller
 {
@@ -17,14 +16,6 @@ class DataBarangController extends Controller
         $barang = Asset::with(['category', 'room'])->paginate(10);
         $categories = Category::all();
         
-        ActivityLogger::log(
-            'view',
-            'barang',
-            'Viewed barang list',
-            null,
-            ['total_items' => $barang->total()]
-        );
-        
         return view('barang.index', compact('barang', 'categories'));
     }
 
@@ -32,14 +23,6 @@ class DataBarangController extends Controller
     {
         $categories = Category::all();
         $rooms = Room::all();
-        
-        ActivityLogger::log(
-            'view',
-            'barang',
-            'Accessed barang creation form',
-            null,
-            ['available_categories' => $categories->count(), 'available_rooms' => $rooms->count()]
-        );
         
         return view('barang.create', compact('categories', 'rooms'));
     }
@@ -76,14 +59,6 @@ class DataBarangController extends Controller
         try {
             $barang = Asset::create($validated);
 
-            ActivityLogger::log(
-                'create',
-                'barang',
-                'Added new barang: ' . $barang->name,
-                null,
-                $barang->toArray()
-            );
-
             DB::commit();
             return redirect()->route('barang.index')
                             ->with('success', 'Barang added successfully');
@@ -99,14 +74,6 @@ class DataBarangController extends Controller
         $barang = Asset::findOrFail($id);
         $categories = Category::all();
         $rooms = Room::all();
-        
-        ActivityLogger::log(
-            'view',
-            'barang',
-            'Accessed edit form for barang: ' . $barang->name,
-            null,
-            $barang->toArray()
-        );
         
         return view('barang.edit', compact('barang', 'categories', 'rooms'));
     }
@@ -148,14 +115,6 @@ class DataBarangController extends Controller
             $changes[] = "purchase cost from '{$oldValues['purchase_cost']}' to '{$barang->purchase_cost}'";
         }
 
-        ActivityLogger::log(
-            'update',
-            'barang',
-            'Updated barang: ' . implode(', ', $changes),
-            $oldValues,
-            $barang->toArray()
-        );
-
         return redirect()->route('barang.index')
             ->with('success', 'Barang updated successfully');
     }
@@ -167,14 +126,6 @@ class DataBarangController extends Controller
         $oldValues = $barang->toArray();
         
         $barang->delete();
-
-        ActivityLogger::log(
-            'delete',
-            'barang',
-            'Deleted barang: ' . $barangName,
-            $oldValues,
-            null
-        );
 
         return redirect()->route('barang.index')
                         ->with('success', 'Barang deleted successfully');

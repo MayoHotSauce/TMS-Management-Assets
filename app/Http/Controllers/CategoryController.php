@@ -37,14 +37,6 @@ class CategoryController extends Controller
 
         $category = Category::create($request->all());
         
-        ActivityLogger::log(
-            'create',
-            'category',
-            'Created new category: ' . $category->name,
-            null,
-            $category->toArray()
-        );
-
         return redirect()->route('categories.index')
             ->with('success', 'Category created successfully.');
     }
@@ -61,24 +53,7 @@ class CategoryController extends Controller
             'description' => 'nullable|string'
         ]);
 
-        $oldValues = $category->toArray();
         $category->update($request->all());
-
-        $changes = [];
-        if ($oldValues['name'] !== $category->name) {
-            $changes[] = "name from '{$oldValues['name']}' to '{$category->name}'";
-        }
-        if ($oldValues['description'] !== $category->description) {
-            $changes[] = "description from '{$oldValues['description']}' to '{$category->description}'";
-        }
-
-        ActivityLogger::log(
-            'update',
-            'category',
-            'Updated category: ' . implode(', ', $changes),
-            $oldValues,
-            $category->toArray()
-        );
 
         return redirect()->route('categories.index')
             ->with('success', 'Category updated successfully.');

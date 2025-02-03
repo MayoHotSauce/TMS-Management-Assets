@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Asset;
 use Illuminate\Http\Request;
-use App\Services\ActivityLogger;
 
 class RoomController extends Controller
 {
@@ -41,14 +40,6 @@ class RoomController extends Controller
         ]);
 
         $room = Room::create($request->all());
-
-        ActivityLogger::log(
-            'create',
-            'room',
-            'Created new room: ' . $room->name,
-            null,
-            $room->toArray()
-        );
 
         return redirect()->route('rooms.index')
             ->with('success', 'Room created successfully.');
@@ -89,14 +80,6 @@ class RoomController extends Controller
             $changes[] = "responsible person from '{$oldValues['responsible_person']}' to '{$room->responsible_person}'";
         }
 
-        ActivityLogger::log(
-            'update',
-            'room',
-            'Updated room: ' . implode(', ', $changes),
-            $oldValues,
-            $room->toArray()
-        );
-
         return redirect()->route('rooms.index')
             ->with('success', 'Room updated successfully.');
     }
@@ -107,14 +90,6 @@ class RoomController extends Controller
         $oldValues = $room->toArray();
         
         $room->delete();
-
-        ActivityLogger::log(
-            'delete',
-            'room',
-            'Deleted room: ' . $roomName,
-            $oldValues,
-            null
-        );
 
         return redirect()->route('rooms.index')
             ->with('success', 'Room deleted successfully.');
